@@ -1,7 +1,7 @@
 PROJ_NAME=ted
-ALUNO= Eduardo Fernandes Lanza
-LIBS=
-OBJETOS=
+ALUNO= eduardoLanza
+LIBS= -lm
+OBJETOS= main.o STreap.o
 # compilador
 CC=gcc
 # Flags
