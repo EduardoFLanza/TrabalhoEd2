@@ -1,0 +1,24 @@
+<svg xmlns:svg="http://www.w3.org/2000/svg"
+xmlns="http://www.w3.org/2000/svg"
+version="1.1">
+<circle style="fill:#808080;fill-opacity:0.5;stroke:#ff00ff"
+r="30" cy="40.693146" cx="41.200001" />
+<text style="font-size:5px;line-height:0%;fill:fuchsia"
+font-size="5" y="40.69" x="41.2"> 1 </text>
+<rect style="fill:#00ffff;fill-opacity:0.5;stroke:#ffff00"
+height="30" width="100" y="36.693146" x="112.2" />
+<text style="font-size:5px;line-height:0%;fill:yellow"
+font-size="5" y="40.69" x="116.2"> 6 </text>
+<circle style="fill:#808080;fill-opacity:0.5;stroke:#ff00ff"
+r="15" cy="35.693146" cx="111.2" />
+<text style="font-size:5px;line-height:0%;fill:fuchsia"
+font-size="5" y="35.69" x="111.2"> 2 </text>
+<rect style="fill:#00ffff;fill-opacity:0.5;stroke:#ffff00"
+height="40" width="90" y="140.69315" x="1.2" />
+<text style="font-size:5px;line-height:0%;fill:yellow"
+font-size="5" y="148.7" x="4.2"> 4 </text>
+<circle style="fill:#808080;fill-opacity:0.5;stroke:#ff00ff"
+r="13" cy="170.69315" cx="221.2" />
+<text style="font-size:5px;line-height:0%;fill:fuchsia"
+font-size="5" y="170.7" x="221.2"> 5 </text>
+</svg>
