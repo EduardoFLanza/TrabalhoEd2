@@ -1,0 +1,12 @@
+[*] inp 10
+círculo
+âncora em (123.500, 18.350)
+raio: 15.00
+preenchimento: blue
+borda: yellow
+[*] sel 50.0 21.0 60.0 35.00
+18: circulo
+29: linha
+5: texto
+9: texto
+21: retâgulo
