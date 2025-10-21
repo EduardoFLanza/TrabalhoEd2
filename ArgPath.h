@@ -1,3 +1,12 @@
+(adicionar includes ??)
+
+
+ // Descrição
+  //Arquivos para leitura de arquivos :thumbsup://
+
+
+
+
 
 // Remove a barra final de um caminho, se houver. (verificar se é melhor tirar ou adicionar)
 void normalizarArg(char *arg, char *argNormalizado);
