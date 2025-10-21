@@ -44,10 +44,6 @@ typedef void (*FvisitaNo) (Info i, double x, double y, double mbbX1, double mbbY
  */
 
 STreap createSTrp(double epsilon){
-
-
-
-
 }
 /*
   Retorna uma ´arvore vazia, com precisao epsilon.
@@ -55,11 +51,6 @@ STreap createSTrp(double epsilon){
  */
 
 Node insertSTrp(STreap t, double x, double y,  Info info){
-
-
-
-
-
 }
 /*
   Insere a informacao info na arvore t, associada a coordenada (x,y).
@@ -69,13 +60,6 @@ Node insertSTrp(STreap t, double x, double y,  Info info){
 
 
 void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado){
-
-
-
-
-
-
-
 }
 /*
   Insere na lista resultado os nos da arvore (Node) cuja ancora estejam dentro da regiao retangular 
@@ -84,11 +68,6 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
 
 
 Info getInfoSTrp(STreap t, Node n){
-
-
-
-
-
 }
 /*
   Retorna a informacao associada ao no´ n, sua ancora (xa,ya) e o retangulo envolvente (mbbX1,mbbY1) -- (mbbX2,mbbY2). 
@@ -96,12 +75,6 @@ Info getInfoSTrp(STreap t, Node n){
  */
 
 Node getNodeSTrp(STreap t, double xa, double ya){
-
-
-
-
-
-
 }
 /*
   Retorna o no da arvore associado a ancora (xa,ya) e o retangulo envolvente; NULL, se tal ancora nao existir.
@@ -120,12 +93,6 @@ void updateInfoSTrp(STreap t, Node n, Info i){
  */
 
 Info deleteNodeSTrp(STreap t, Node n){
-
-
-
-
-
-
 }
 /*
   Remove o no' n da arvore, portanto, o no' n  deve ser considerado invalido.
@@ -133,11 +100,6 @@ Info deleteNodeSTrp(STreap t, Node n){
  */
 
 Info removeSTrp(STreap t,double xa, double ya){
-
-
-
-
-
 }
 /*
   Remove o no' da arvore cuja chave e´ a coordenada (xa,ya). 
@@ -147,12 +109,6 @@ Info removeSTrp(STreap t,double xa, double ya){
  */
 
 void printSTrp(STreap t, char *nomeArq){
-
-
-
-
-
-
 }
 /*
   "Desenha" (no formato dot) a arvore no arquivo nomeArq.
@@ -166,24 +122,12 @@ void printSTrp(STreap t, char *nomeArq){
  */
 
 void percursoLargura(STreap t, FvisitaNo fVisita, void *aux){
-
-
-
-
 }
 
 void percursoSimetrico(STreap t, FvisitaNo fVisita, void *aux){
-
-
-
-
 }
 
 void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux){
-
-
-
-
 }
 
 /*
