@@ -18,155 +18,155 @@ E' expressamente proibido o uso de ferramentas de IA para a sua implementacao.
 A documentacao deste modulo deve ser melhorada.
 */
 
-
-typedef void *Graph;
-typedef int Node;
-typedef void *Edge;
-typedef void *Info;
-
-/*
-  Invocado quando uma aresta � "descoberta"/"percorrida"/"classificada". 
-  Tambem informa os tempos de descoberta e finalizacao
+/**
+ * ============================================================================
+ * Módulo: digraph
+ * Finalidade:
+ *   Este módulo implementa um Grafo Dirigido (DIGRAPH) utilizando uma lista de
+ *   adjacência genérica (ListAdj). O módulo segue o paradigma de programação
+ *   orientada a objetos em C, com ocultação de informações: nenhuma estrutura
+ *   concreta é exposta neste cabeçalho.
+ *
+ *
+ * Operações principais:
+ *   - Criação e destruição do grafo.
+ *   - Inserção de vértices e arestas.
+ *   - Consulta de informações (nome, info, adjacência).
+ *   - Busca de caminhos e varreduras (BFS, DFS).
+ *
+ * Observação:
+ *   A implementação utiliza o módulo ListAdj como estrutura interna.
+ * ============================================================================
  */
-bool (*procEdge)(g,e,td,tf, void *extra); 
 
-/*
-  Invocado quando percurso e' recomecado
+#ifndef DIGRAPH_H
+#define DIGRAPH_H
+
+#include "lista.h"
+#include "listadj.h"
+
+/* Tipos opacos exportados */
+typedef void* Digraph;
+typedef void* GInfoVert;
+typedef void* GInfoArest;
+
+/* ============================================================================
+ * Criação e destruição
+ * ============================================================================
  */
-bool (*dfsRestarted)(g, void *extra);
 
-
-
-/*
-    Cria um grafo com, no maximo, "nVert" vertices.
+/**
+ * Função: dg_create
+ * Finalidade:
+ *   Cria uma nova instância de Digraph vazia.
+ *
+ * Retorno:
+ *   Digraph - instância alocada. Deve ser destruída com dg_destroy().
  */
-Graph createGraph(nVert);
+Digraph dg_create();
 
-
-/*
-    Retorna numero maximo de vertices que grafo g pode conter.
+/**
+ * Função: dg_destroy
+ * Finalidade:
+ *   Destrói completamente o grafo, liberando:
+ *     - Todos os vértices,
+ *     - Todas as arestas,
+ *     - Informações associadas (caso fornecidas funções free).
+ *
+ * Parâmetros:
+ *   GInfoVert (*freeV)(void*)  -> função para liberar InfoVert
+ *   GInfoArest (*freeA)(void*) -> função para liberar InfoArest
  */
-int getMaxNodes(Graph g);
+void dg_destroy(Digraph g,
+                void (*freeV)(GInfoVert),
+                void (*freeA)(GInfoArest));
 
-
-/*
-    Retorna numero total de vertices adicionados ao grafo gr.
+/* ============================================================================
+ * Operações sobre vértices
+ * ============================================================================
  */
-int getTotalNodes(Graph g);
 
-
-/*
-    Adiciona um novo v�rtice ao grafo "g" com o nome "nome".
+/**
+ * Função: dg_addVertex
+ * Finalidade:
+ *   Insere um novo vértice de nome único no grafo.
+ *
+ * Parâmetros:
+ *   nome - identificador textual do vértice.
+ *   info - informação associada ao vértice.
+ *
+ * Retorno:
+ *   1 se inserido com sucesso
+ *   0 se já existia
  */
-Node addNode(g, nome, info);
+int dg_addVertex(Digraph g, const char* nome, GInfoVert info);
 
-
-/*
-    Retorna no' cujo de nome e' "nome". 
+/**
+ * Função: dg_getVertexInfo
+ * Finalidade:
+ *   Retorna a informação associada a um vértice já existente.
  */
-Node getNode(g, nome);
+GInfoVert dg_getVertexInfo(Digraph g, const char* nome);
 
-
-/*
+/**
+ * Função: dg_getVertexIndex
+ * Finalidade:
+ *   Retorna o índice interno do vértice no vetor do ListAdj.
+ *   Retorna -1 se não existir.
  */
-Info getNodeInfo(g, node);
+int dg_getVertexIndex(Digraph g, const char* nome);
 
-
-/*
+/**
+ * Função: dg_getVertexNameByIndex
+ * Finalidade:
+ *   Retorna o nome textual do vértice armazenado no índice informado.
  */
-char *getNodeName(g, node);
+const char* dg_getVertexNameByIndex(Digraph g, int index);
 
-
-/*
+/**
+ * Função: dg_numVertices
+ * Finalidade:
+ *   Retorna o número total de vértices do grafo.
  */
-void setNodeInfo(g, node, info);
+int dg_numVertices(Digraph g);
 
-
-/*
+/* ============================================================================
+ * Operações sobre arestas
+ * ============================================================================
  */
-Edge addEdge(g, from, to, info);
 
-
-/*
+/**
+ * Função: dg_addEdge
+ * Finalidade:
+ *   Insere uma aresta dirigida origem → destino.
+ *
+ * Parâmetros:
+ *   origem  - nome do vértice de partida
+ *   destino - nome do vértice de chegada
+ *   peso    - peso da aresta
+ *   info    - informação associada à aresta
+ *
+ * Retorno:
+ *   1 se inserida com sucesso
+ *   0 caso contrário
  */
-Edge getEdge(g, from, to);
+int dg_addEdge(Digraph g, const char* origem, const char* destino,
+               double peso, GInfoArest info);
 
-
-/*
+/**
+ * Função: dg_getAdjList
+ * Finalidade:
+ *   Retorna a lista de arestas que saem de um vértice.
  */
-Node getFromNode(g, e)
+Lista dg_getAdjList(Digraph g, const char* nome);
 
-  
-/*
- */  
-Node getToNode(g, e);
-
-
-/*
+/* ============================================================================
+ * Capacidades extras (opcional)
+ * ============================================================================
  */
-Info getEdgeInfo(g, e);
 
-
-/*
- */
-void setEdgeInfo(g, e, info);
-
-
-/*
- */
-void removeEdge(g,e);
-
-
-/*
- */
-bool isAdjacent(Graph g, Node from, Node to);
-
-
-/* 
-   Adiciona 'a lista "nosAdjacentes" os nos adjacentes 'a "node".
- */
-void adjacentNodes(g, node, nosAdjacentes);
-
-
-/*
-   Adiciona 'a lista "arestaAdjacentes" as arestas (x,y), tal que,
-   x == node.
- */
-void adjacentEdges(g, node, Lista arestasAdjacentes);
-
-
-/*
-   Insere na lista "nomesNodes" os nomes atribuidos aos nos do grafo.
- */
-void  getNodeNames(Graph g, Lista nomesNodes);
-
-
-/*
-   Insere na lista "arestas", as arestas de g.
- */
-void getEdges(g, Lista arestas);
-
-
-/*
-   Faz percurso em profundidade sobre  g, a partir do no' node, classificando 
-   as arestas do grafo, invocando a respectiva funcao.
-      A busca em profundidade, eventualmente, pode produzir uma floresta.
-   newTree e' invocada sempre que o percurso for retomado.
- */  
-bool dfs(g, node, procEdge treeEdge, forwardEdge, returnEdge,
-	 crossEdge, newTree, void *extra);
-
-
-/*
-   Percorre o grafo g em largura, a partir do no' node. discoverNode e' usada
-   para a aresta (x,y) usada para "descobrir" o y.
- */
-bool bfs(g, node, discoverNode, void *extra);
-
-
-/*
-   Destroi o grafo "g".
- */
-void killDG(Graph g);
+void dg_bfs(Digraph g, const char* start, void (*visit)(const char*));
+void dg_dfs(Digraph g, const char* start, void (*visit)(const char*));
+Lista dg_shortestPath(Digraph g, const char* origem, const char* destino);
 
 #endif
