@@ -16,159 +16,76 @@
  *     enquanto não ocorrer nenhuma remoção posterior.
  */
 
+/**
+ *   Árvore espacial tipo Treap (STreap) para indexação de elementos por
+ *   coordenada (x,y). Fornece inserção, remoção, busca por região, percurso
+ *   e obtenção da menor bounding box que engloba todos os elementos.
+ *
+ *   A chave de busca é a coordenada (x,y). Algumas operações retornam nós
+ *   internos (SNode) que devem ser considerados inválidos após remoções.
+ *
+ */
+
 #ifndef STREAP_H
 #define STREAP_H
 
 #include "lista.h"
 
-typedef void *STreap;   /* Estrutura da árvore */
-typedef void *SInfo;    /* Informação armazenada */
-typedef void *SNode;    /* Nó interno */
+typedef void* STreap;
+typedef void* SInfo;
+typedef void* SNode;
 
-/* 
- * Tipo de função de visita usada em percursos.
- * Recebe:
- *   - info armazenada
- *   - coordenadas da âncora
- *   - bounding box mínimo (mbbX1,mbbY1) e máximo (mbbX2,mbbY2)
- *   - ponteiro auxiliar para dados compartilhados
- */
-typedef void (*FvisitaNo)(
-    SInfo i,
-    double x, double y,
-    double mbbX1, double mbbY1,
-    double mbbX2, double mbbY2,
-    void *aux
-);
+/* Assinatura para função de visita a um nó durante percursos */
+typedef void (*FvisitaNo)(SInfo info, double x, double y,
+                          double mbbX1, double mbbY1,
+                          double mbbX2, double mbbY2,
+                          void* aux);
 
-/*
- * Função: createSTrp
- * Descrição:
- *     Cria uma STreap vazia, definindo a precisão epsilon.
- *
- * Parâmetros:
- *     epsilon — erro absoluto aceito na comparação de números reais.
- *
- * Retorno:
- *     Um ponteiro para a STreap criada, ou NULL caso não haja memória.
- */
-STreap createSTrp(double epsilon);
+/* Cria uma STreap com precisão epsilon; retorna NULL em falha */
+STreap st_create(double epsilon);
 
-/*
- * Função: insertSTrp
- * Descrição:
- *     Insere a informação info na STreap associada à âncora (x,y).
- *
- * Parâmetros:
- *     t — STreap
- *     x,y — âncora (chave)
- *     info — informação armazenada
- *
- * Retorno:
- *     Nó onde foi inserido, ou NULL se já existir chave igual.
- */
-SNode insertSTrp(STreap t, double x, double y, SInfo info);
+/* Insere info na treap com ancora (x,y). Retorna SNode (não-NULL) ou NULL se chave já existe */
+SNode st_insert(STreap t, double x, double y, SInfo info);
 
-/*
- * Função: getNodeRegiaoSTrp
- * Descrição:
- *     Insere na lista resultado os nós cuja âncora esteja dentro da região
- *     retangular de âncora (x,y) com largura w e altura h.
- *
- * Parâmetros:
- *     t — STreap
- *     x,y,w,h — retângulo de busca
- *     resultado — lista onde serão inseridos nós encontrados
- */
-void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
-
-/*
- * Função: getInfoSTrp
- * Descrição:
- *     Obtém a informação armazenada no nó n.
- *
- * Parâmetros:
- *     t — STreap
- *     n — nó válido
- *
- * Retorno:
- *     Informação armazenada no nó.
- */
-SInfo getInfoSTrp(STreap t, SNode n);
-
-/*
- * Função: getNodeSTrp
- * Descrição:
- *     Retorna o nó cuja âncora é (xa,ya).
- *
- * Parâmetros:
- *     t — STreap
- *     xa,ya — âncora buscada
- *
- * Retorno:
- *     Nó correspondente, ou NULL se inexistente.
- */
-SNode getNodeSTrp(STreap t, double xa, double ya);
-
-/*
- * Função: updateInfoSTrp
- * Descrição:
- *     Atualiza a informação associada ao nó n, sem alterar a âncora.
- *
- * Parâmetros:
- *     t — STreap
- *     n — nó existente
- *     info — nova informação
- */
-void updateInfoSTrp(STreap t, SNode n, SInfo info);
-
-/*
- * Função: deleteNodeSTrp
- * Descrição:
- *     Remove o nó n da STreap.
- *
- * Parâmetros:
- *     t — STreap
- *     n — nó válido
- *
- * Retorno:
- *     Informação previamente armazenada no nó.
- */
-SInfo deleteNodeSTrp(STreap t, SNode n);
-
-/*
- * Função: removeSTrp
- * Descrição:
- *     Remove da STreap o nó cuja âncora é (xa,ya).
- *
- * Parâmetros:
- *     t — STreap
- *     xa,ya — âncora a ser removida
- *
- * Retorno:
- *     Informação associada ao nó removido, ou NULL se não existir.
- */
+/* Remove o nó com ancora (x,y) e retorna a SInfo associada; NULL se não encontrado */
 SInfo removeSTrp(STreap t, double xa, double ya);
 
-/*
- * Função: printSTrp
- * Descrição:
- *     Gera arquivo no formato DOT contendo a árvore.
- */
-void printSTrp(STreap t, char *nomeArq);
+/* Remove um nó por ponteiro SNode; retorna a SInfo associada */
+SInfo deleteNodeSTrp(STreap t, SNode n);
 
-/*
- * Percursos: visitam todos os nós da árvore, chamando fVisita.
- */
+/* Busca nó com ancora (x,y); NULL se não encontrado */
+SNode st_search(STreap t, double x, double y);
+
+/* Retorna a SInfo associada ao nó */
+SInfo st_getInfo(SNode n);
+
+/* Obtém a chave (x,y) do nó */
+void st_getKey(SNode n, double *x, double *y);
+
+/* Insere em `resultado` os nós cuja ancora esteja dentro do retângulo (x,y,w,h) */
+void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
+
+/* Atualiza a informação associada a um nó (sem alterar a ancora) */
+void updateInfoSTrp(STreap t, SNode n, SInfo i);
+
+/* Percursos: largura, simétrico (inorder) e profundidade (pré-ordem) */
 void percursoLargura(STreap t, FvisitaNo fVisita, void *aux);
 void percursoSimetrico(STreap t, FvisitaNo fVisita, void *aux);
 void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
 
-/*
- * Função: killSTrp
- * Descrição:
- *     Libera todos os recursos usados pela árvore.
- */
-void killSTrp(STreap t);
+/* Busca por região (range search) aplicando visit a cada nó encontrado */
+void st_rangeSearch(STreap t, double xmin, double ymin, double xmax, double ymax, void (*visit)(SNode));
 
-#endif
+/* Realiza percurso inorder por X e aplica visit */
+void st_inorderX(STreap t, void (*visit)(SNode));
+
+/* Retorna 1 se existirem elementos e preenche xmin,ymin,xmax,ymax; caso contrário 0 */
+int st_getMBB(STreap t, double *xmin, double *ymin, double *xmax, double *ymax);
+
+/* Destrói a STreap; freeInfo é callback opcional para liberar cada SInfo */
+void st_destroy(STreap t, void (*freeInfo)(SInfo));
+
+/* Debug: imprime em formato dot (opcional) */
+void printSTrp(STreap t, const char *nomeArq);
+
+#endif /* STREAP_H */
