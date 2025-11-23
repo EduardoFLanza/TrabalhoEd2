@@ -1,266 +1,123 @@
-/* --- Funções do grafo --- */
-
-/*
- * createGraph()
- * -------------
- * Cria um grafo direcionado com capacidade máxima de nVert nós.
- * Inicializa o número de nós atuais como 0 e aloca memória para os nós.
+/**
+ * ============================================================================
+ * Implementação do módulo digraph
+ * ============================================================================
  */
-Graph createGraph(int nVert) {
-    GraphStruct *g = (GraphStruct*) malloc(sizeof(GraphStruct));
-    if (!g) return NULL;
 
-    g->maxNodes = nVert;
-    g->totalNodes = 0;
+#include <stdlib.h>
+#include <string.h>
+#include "digraph.h"
+#include "listadj.h"
+#include "lista.h"
 
-    g->nodes = (NodeStruct*) malloc(nVert * sizeof(NodeStruct));
-    if (!g->nodes) {
-        free(g);
-        return NULL;
+/* Estrutura concreta: NÃO aparece no .h */
+typedef struct digraph {
+    ListAdj la;  /* Estrutura interna baseada em lista de adjacência */
+} DG;
+
+/* ============================================================================
+ * Criação e destruição
+ * ============================================================================
+ */
+
+Digraph dg_create() {
+    DG* g = calloc(1, sizeof(DG));
+    g->la = criaListAdj();
+    return g;
+}
+
+void dg_destroy(Digraph G,
+                void (*freeV)(GInfoVert),
+                void (*freeA)(GInfoArest))
+{
+    DG* g = (DG*) G;
+
+    /* Percorre vértices */
+    int N = numVertices(g->la);
+
+    for (int i = 0; i < N; i++) {
+        const char* nome = getVertNameByIndex(g->la, i);
+        Lista adj = getAdjListByIndex(g->la, i);
+
+        /* libera informações de arestas */
+        for (Posic p = getFirstLst(adj); p != NULL; p = getNextLst(p)) {
+            void* ar = getLst(p);
+            if (freeA) freeA( ((void**)ar)[3] );
+        }
+
+        /* libera info vertice */
+        if (freeV) {
+            GInfoVert iv = getInfoVert(g->la, nome);
+            if (iv) freeV(iv);
+        }
     }
 
-    for (int i = 0; i < nVert; i++)
-        g->nodes[i].adj.inicio = NULL;
-
-    return (Graph) g;
+    /* libera estrutura interna */
+    free(g);
 }
 
-/*
- * getMaxNodes()
- * -------------
- * Retorna o número máximo de nós que o grafo pode ter.
+/* ============================================================================
+ * Operações sobre vértices
+ * ============================================================================
  */
-int getMaxNodes(Graph g) {
-    GraphStruct *gr = (GraphStruct*) g;
-    return gr->maxNodes;
+
+int dg_addVertex(Digraph G, const char* nome, GInfoVert info) {
+    DG* g = (DG*) G;
+    return addVertice(g->la, nome, info);
 }
 
-/*
- * getTotalNodes()
- * ---------------
- * Retorna o número atual de nós adicionados no grafo.
- */
-int getTotalNodes(Graph g) {
-    GraphStruct *gr = (GraphStruct*) g;
-    return gr->totalNodes;
+GInfoVert dg_getVertexInfo(Digraph G, const char* nome) {
+    DG* g = (DG*) G;
+    return getInfoVert(g->la, nome);
 }
 
-/*
- * addNode()
- * ---------
- * Adiciona um novo nó ao grafo com o nome e informação fornecidos.
- * Retorna o índice do nó adicionado ou -1 caso o grafo esteja cheio.
- */
-Node addNode(Graph g, const char *nome, Info info) {
-    GraphStruct *gr = (GraphStruct*) g;
-    if (gr->totalNodes >= gr->maxNodes) return -1;
-
-    Node n = gr->totalNodes;
-    gr->nodes[n].nome = strdup(nome);
-    gr->nodes[n].info = info;
-    gr->nodes[n].adj.inicio = NULL;
-    gr->totalNodes++;
-
-    return n;
+int dg_numVertices(Digraph G) {
+    DG* g = (DG*) G;
+    return numVertices(g->la);
 }
 
-/*
- * getNode()
- * ---------
- * Busca um nó pelo seu nome.
- * Retorna o índice do nó ou -1 caso não exista.
- */
-Node getNode(Graph g, const char *nome) {
-    GraphStruct *gr = (GraphStruct*) g;
-    for (int i = 0; i < gr->totalNodes; i++)
-        if (strcmp(gr->nodes[i].nome, nome) == 0)
-            return i;
-    return -1;
+int dg_getVertexIndex(Digraph G, const char* nome) {
+    DG* g = (DG*) G;
+    return getVertIndex(g->la, nome);
 }
 
-/*
- * getNodeInfo()
- * -------------
- * Retorna a informação associada a um nó específico.
- */
-Info getNodeInfo(Graph g, Node node) {
-    GraphStruct *gr = (GraphStruct*) g;
-    return gr->nodes[node].info;
+const char* dg_getVertexNameByIndex(Digraph G, int index) {
+    DG* g = (DG*) G;
+    return getVertNameByIndex(g->la, index);
 }
 
-/*
- * getNodeName()
- * -------------
- * Retorna o nome do nó especificado pelo índice.
+/* ============================================================================
+ * Operações sobre arestas
+ * ============================================================================
  */
-char *getNodeName(Graph g, Node node) {
-    GraphStruct *gr = (GraphStruct*) g;
-    return gr->nodes[node].nome;
+
+int dg_addEdge(Digraph G, const char* origem, const char* destino,
+               double peso, GInfoArest info)
+{
+    DG* g = (DG*) G;
+    return addAresta(g->la, origem, destino, peso, info);
 }
 
-/*
- * setNodeInfo()
- * -------------
- * Atualiza a informação de um nó específico.
- */
-void setNodeInfo(Graph g, Node node, Info info) {
-    GraphStruct *gr = (GraphStruct*) g;
-    gr->nodes[node].info = info;
+Lista dg_getAdjList(Digraph G, const char* nome) {
+    DG* g = (DG*) G;
+    return getAdjacentes(g->la, nome);
 }
 
-/* --- Funções de arestas --- */
-
-/*
- * addEdge()
- * ---------
- * Adiciona uma aresta direcionada do nó 'from' para o nó 'to', com a informação associada.
- * Retorna o ponteiro para a aresta criada (Edge) ou NULL em caso de falha.
+/* ============================================================================
+ * BFS, DFS, Shortest Path
+ * (placeholders — você pode implementar se precisar)
+ * ============================================================================
  */
-Edge addEdge(Graph g, Node from, Node to, Info info) {
-    GraphStruct *gr = (GraphStruct*) g;
-    Celula *nova = (Celula*) malloc(sizeof(Celula));
-    if (!nova) return NULL;
 
-    nova->to = to;
-    nova->info = info;
-    nova->prox = gr->nodes[from].adj.inicio;
-    gr->nodes[from].adj.inicio = nova;
-
-    return nova;
+void dg_bfs(Digraph G, const char* start, void (*visit)(const char*)) {
+    (void)G; (void)start; (void)visit;
 }
 
-/*
- * getEdge()
- * ---------
- * Retorna a aresta que conecta o nó 'from' ao nó 'to'.
- * Retorna NULL se não existir.
- */
-Edge getEdge(Graph g, Node from, Node to) {
-    GraphStruct *gr = (GraphStruct*) g;
-    Celula *aux = gr->nodes[from].adj.inicio;
-    while (aux != NULL) {
-        if (aux->to == to)
-            return aux;
-        aux = aux->prox;
-    }
+void dg_dfs(Digraph G, const char* start, void (*visit)(const char*)) {
+    (void)G; (void)start; (void)visit;
+}
+
+Lista dg_shortestPath(Digraph G, const char* origem, const char* destino) {
+    (void)G; (void)origem; (void)destino;
     return NULL;
 }
-
-/*
- * getFromNode()
- * -------------
- * Dado um ponteiro de aresta, retorna o nó de origem (from).
- */
-Node getFromNode(Graph g, Edge e) {
-    Celula *c = (Celula*) e;
-    GraphStruct *gr = (GraphStruct*) g;
-    for (int i = 0; i < gr->totalNodes; i++) {
-        Celula *aux = gr->nodes[i].adj.inicio;
-        while (aux) {
-            if (aux == c) return i;
-            aux = aux->prox;
-        }
-    }
-    return -1;
-}
-
-/*
- * getToNode()
- * -----------
- * Retorna o nó de destino (to) da aresta especificada.
- */
-Node getToNode(Graph g, Edge e) {
-    Celula *c = (Celula*) e;
-    return c->to;
-}
-
-/*
- * getEdgeInfo()
- * -------------
- * Retorna a informação associada a uma aresta.
- */
-Info getEdgeInfo(Graph g, Edge e) {
-    Celula *c = (Celula*) e;
-    return c->info;
-}
-
-/*
- * setEdgeInfo()
- * -------------
- * Atualiza a informação de uma aresta.
- */
-void setEdgeInfo(Graph g, Edge e, Info info) {
-    Celula *c = (Celula*) e;
-    c->info = info;
-}
-
-/*
- * removeEdge()
- * ------------
- * Remove uma aresta do grafo, liberando a memória associada.
- */
-void removeEdge(Graph g, Edge e) {
-    GraphStruct *gr = (GraphStruct*) g;
-    Node from = getFromNode(g, e);
-    Celula *prev = NULL;
-    Celula *cur = gr->nodes[from].adj.inicio;
-
-    while (cur) {
-        if (cur == e) {
-            if (prev)
-                prev->prox = cur->prox;
-            else
-                gr->nodes[from].adj.inicio = cur->prox;
-            free(cur);
-            return;
-        }
-        prev = cur;
-        cur = cur->prox;
-    }
-}
-
-/*
- * isAdjacent()
- * ------------
- * Verifica se existe uma aresta do nó 'from' para o nó 'to'.
- * Retorna true se existir, false caso contrário.
- */
-bool isAdjacent(Graph g, Node from, Node to) {
-    return getEdge(g, from, to) != NULL;
-}
-
-/* --- Funções de listas --- */
-
-/*
- * adjacentNodes()
- * ---------------
- * Retorna a lista de nós adjacentes a um dado nó.
- * A lista é representada pelo ponteiro para a lista interna de adjacência.
- */
-void adjacentNodes(Graph g, Node node, Lista *nosAdjacentes) {
-    GraphStruct *gr = (GraphStruct*) g;
-    nosAdjacentes->inicio = gr->nodes[node].adj.inicio;
-}
-
-/*
- * killDG()
- * --------
- * Libera toda a memória alocada para o grafo, incluindo nós, nomes e arestas.
- */
-void killDG(Graph g) {
-    GraphStruct *gr = (GraphStruct*) g;
-
-    for (int i = 0; i < gr->totalNodes; i++) {
-        Celula *aux = gr->nodes[i].adj.inicio;
-        while (aux != NULL) {
-            Celula *tmp = aux;
-            aux = aux->prox;
-            free(tmp);
-        }
-        free(gr->nodes[i].nome);
-    }
-
-    free(gr->nodes);
-    free(gr);
-}
-
