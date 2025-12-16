@@ -1,151 +1,224 @@
-/**
+#ifndef _LISTA_H
+#define _LISTA_H
+
+#include "dataTypes.h"
+#include <stdbool.h>
+
+/*
  * Módulo: lista
- * Finalidade:
- *     Este módulo implementa uma lista simplesmente encadeada genérica
- *     baseada em células que armazenam ponteiros (Item). A estrutura permite
- *     inserção, remoção de posições específicas, iteração sequencial e
- *     consulta de tamanho.
  *
- *     Uma instância de Lista representa uma coleção dinâmica de elementos,
- *     organizada de forma linear, em que cada posição (Posic) referencia
- *     internamente uma célula da lista.
+ * Descrição:
+ *     Este módulo implementa uma lista duplamente encadeada genérica,
+ *     cujos elementos são armazenados como ponteiros (Item).
+ *     A lista permite inserção, remoção, acesso por posição, iteração
+ *     sequencial e operações funcionais (map, filter, fold).
+ *
+ *     Uma instância de Lista representa uma coleção ordenada de itens,
+ *     gerenciada exclusivamente pelas funções deste módulo.
  *
  * Abstração:
- *     - Esta é uma estrutura genérica: qualquer ponteiro (void*) pode ser
- *       armazenado como conteúdo.
- *     - O módulo oculta completamente os detalhes internos (Information Hiding).
- *       Não existem “structs” neste arquivo; toda a implementação está no .c.
- *
- * Visão geral das operações:
- *     - criaLista: cria uma lista vazia.
- *     - insertLst: insere um elemento ao final.
- *     - getFirstLst / getNextLst: permite iterar pela lista.
- *     - getLst: recupera o item armazenado em uma posição.
- *     - lengthLst: informa quantos elementos existem.
- *     - removePosicLst: remove uma posição específica.
- *     - removeLista: destrói a lista inteira.
+ *     - Lista, Posic e Iterador são tipos opacos.
+ *     - O usuário não tem acesso à estrutura interna da lista.
  *
  * Importante:
- *     “O que é uma instância da abstração criada por este módulo?”
- *        → Uma instância de Lista é uma referência opaca para uma estrutura
- *          encadeada gerenciada exclusivamente pelas funções definidas aqui.
+ *     Uma instância da abstração criada por este módulo é uma referência
+ *     opaca para uma estrutura de lista duplamente encadeada.
  */
 
-#ifndef LISTA_H
-#define LISTA_H
+/* Tipos opacos */
+typedef void *Lista;
+typedef void *Posic;
+typedef void *Iterador;
+typedef void *Clausura;
 
-/* Tipos opacos exportados pelo módulo */
-typedef void* Item;   /* Conteúdo armazenado na lista */
-typedef void* Lista;  /* Instância opaca da lista */
-typedef void* Posic;  /* Referência para uma posição da lista */
+/* Constantes */
+#define NIL NULL
+#define CAPAC_ILIMITADA -1
 
-
-/* -------------------------------------------------------------------------
- * Função: criaLista
- * Finalidade:
- *     Criar uma nova lista vazia.
- *
+/*
+ * Descrição: Cria uma lista vazia.
  * Parâmetros:
- *     - Nenhum.
- *
+ *     capacidade: número máximo de elementos ou valor negativo para lista ilimitada.
  * Retorno:
- *     - Uma nova instância de Lista.
- * ------------------------------------------------------------------------- */
-Lista criaLista();
+ *     Uma nova instância de Lista.
+ */
+Lista createLst(int capacidade);
 
-/* -------------------------------------------------------------------------
- * Função: removeLista
- * Finalidade:
- *     Remover toda a lista e liberar todas as células.
- *
+/*
+ * Descrição: Define a posição inicial de um iterador.
  * Parâmetros:
- *     - l        : instância da lista.
- *     - freeFunc : função opcional para liberar o conteúdo de cada item.
- *
- * Restrições:
- *     - Se os itens foram alocados dinamicamente, freeFunc deve ser fornecida.
- *
- * Efeitos:
- *     - A lista é destruída e não pode mais ser usada.
- * ------------------------------------------------------------------------- */
-void removeLista(Lista l, void (*freeFunc)(Item));
-
-/* -------------------------------------------------------------------------
- * Função: insertLst
- * Finalidade:
- *     Inserir um novo item ao final da lista.
- *
- * Parâmetros:
- *     - l  : instância da lista.
- *     - it : ponteiro para o conteúdo a ser inserido.
- *
+ *     L : lista associada.
+ *     it: iterador.
+ *     p : posição inicial.
  * Retorno:
- *     - A posição (Posic) onde o item foi inserido.
- * ------------------------------------------------------------------------- */
-Posic insertLst(Lista l, Item it);
+ *     Nenhum.
+ */
+void setIteratorPosition(Lista L, Iterador it, Posic p);
 
-/* -------------------------------------------------------------------------
- * Função: getFirstLst
- * Finalidade:
- *     Recuperar a primeira posição da lista.
- *
- * Retorno:
- *     - Posic da primeira posição, ou NULL se a lista estiver vazia.
- * ------------------------------------------------------------------------- */
-Posic getFirstLst(Lista l);
-
-/* -------------------------------------------------------------------------
- * Função: getNextLst
- * Finalidade:
- *     Obter a posição seguinte à informada.
- *
+/*
+ * Descrição: Retorna o número de elementos da lista.
  * Parâmetros:
- *     - p : posição atual.
- *
+ *     L: lista.
  * Retorno:
- *     - Próxima posição, ou NULL se não houver.
- * ------------------------------------------------------------------------- */
-Posic getNextLst(Posic p);
+ *     Quantidade de elementos.
+ */
+int lengthLst(Lista L);
 
-/* -------------------------------------------------------------------------
- * Função: getLst
- * Finalidade:
- *     Obter o item armazenado em uma posição.
- *
+/*
+ * Descrição: Retorna a capacidade máxima da lista.
  * Parâmetros:
- *     - p : posição da lista.
- *
+ *     L: lista.
  * Retorno:
- *     - Item armazenado na posição.
- * ------------------------------------------------------------------------- */
-Item getLst(Posic p);
+ *     Capacidade máxima ou -1 se ilimitada.
+ */
+int maxLengthLst(Lista L);
 
-/* -------------------------------------------------------------------------
- * Função: lengthLst
- * Finalidade:
- *     Determinar o número de elementos na lista.
- *
+/*
+ * Descrição: Verifica se a lista está vazia.
  * Parâmetros:
- *     - l : instância da lista.
- *
+ *     L: lista.
  * Retorno:
- *     - Quantidade de elementos.
- * ------------------------------------------------------------------------- */
-int lengthLst(Lista l);
+ *     true se vazia, false caso contrário.
+ */
+bool isEmptyLst(Lista L);
 
-/* -------------------------------------------------------------------------
- * Função: removePosicLst
- * Finalidade:
- *     Remover uma posição específica da lista.
- *
+/*
+ * Descrição: Verifica se a lista está cheia.
  * Parâmetros:
- *     - l : lista.
- *     - p : posição a ser removida.
- *
- * Observação:
- *     - Esta função remove apenas a célula; NÃO libera o conteúdo.
- * ------------------------------------------------------------------------- */
-void removePosicLst(Lista l, Posic p);
+ *     L: lista.
+ * Retorno:
+ *     true se cheia, false caso contrário.
+ */
+bool isFullLst(Lista L);
+
+/*
+ * Descrição: Insere um item no final da lista.
+ * Parâmetros:
+ *     L   : lista.
+ *     info: item a ser inserido.
+ * Retorno:
+ *     Posição do item inserido ou NIL se falhar.
+ */
+Posic insertLst(Lista L, Item info);
+
+/*
+ * Descrição: Remove e retorna o primeiro elemento da lista.
+ * Parâmetros:
+ *     L: lista.
+ * Retorno:
+ *     Item removido.
+ */
+Item popLst(Lista L);
+
+/*
+ * Descrição: Remove o elemento indicado por uma posição.
+ * Parâmetros:
+ *     L: lista.
+ *     p: posição a ser removida.
+ * Retorno:
+ *     Nenhum.
+ */
+void removeLst(Lista L, Posic p);
+
+/*
+ * Descrição: Retorna o item armazenado em uma posição.
+ * Parâmetros:
+ *     L: lista.
+ *     p: posição.
+ * Retorno:
+ *     Item armazenado.
+ */
+Item getLst(Lista L, Posic p);
+
+/*
+ * Descrição: Insere um item antes da posição indicada.
+ * Parâmetros:
+ *     L   : lista.
+ *     p   : posição de referência.
+ *     info: item a ser inserido.
+ * Retorno:
+ *     Posição do item inserido.
+ */
+Posic insertBeforeLst(Lista L, Posic p, Item info);
+
+/*
+ * Descrição: Insere um item após a posição indicada.
+ * Parâmetros:
+ *     L   : lista.
+ *     p   : posição de referência.
+ *     info: item a ser inserido.
+ * Retorno:
+ *     Posição do item inserido.
+ */
+Posic insertAfterLst(Lista L, Posic p, Item info);
+
+/*
+ * Descrição: Retorna a primeira posição da lista.
+ * Parâmetros:
+ *     L: lista.
+ * Retorno:
+ *     Primeira posição ou NIL.
+ */
+Posic getFirstLst(Lista L);
+
+/*
+ * Descrição: Retorna a próxima posição da lista.
+ * Parâmetros:
+ *     L: lista.
+ *     p: posição atual.
+ * Retorno:
+ *     Próxima posição ou NIL.
+ */
+Posic getNextLst(Lista L, Posic p);
+
+/*
+ * Descrição: Retorna a última posição da lista.
+ * Parâmetros:
+ *     L: lista.
+ * Retorno:
+ *     Última posição ou NIL.
+ */
+Posic getLastLst(Lista L);
+
+/*
+ * Descrição: Retorna a posição anterior da lista.
+ * Parâmetros:
+ *     L: lista.
+ *     p: posição atual.
+ * Retorno:
+ *     Posição anterior ou NIL.
+ */
+Posic getPrevLst(Lista L, Posic p);
+
+/*
+ * Descrição: Libera toda a memória associada à lista.
+ * Parâmetros:
+ *     L: lista.
+ * Retorno:
+ *     Nenhum.
+ */
+void killLst(Lista L);
+
+/* Iteradores */
+
+Iterador createIterador(Lista L, bool reverso);
+bool isIteratorEmpty(Lista L, Iterador it);
+Iterador getIteratorNext(Lista L, Iterador it);
+Item getIteratorItem(Lista L, Iterador it);
+Posic getIteratorPosic(Lista L, Iterador it);
+void killIterator(Lista L, Iterador it);
+
+/* Funções de ordem superior */
+
+typedef Item (*Apply)(Item item);
+typedef bool (*Check)(Item item);
+typedef bool (*CheckClausure)(Item item, Clausura c);
+typedef void (*ApplyClosure)(Item item, Clausura c);
+
+Lista map(Lista L, Apply f);
+Lista filter(Lista L, Check f);
+void fold(Lista L, ApplyClosure f, Clausura c);
+Lista filterClausure(Lista L, CheckClausure f, Clausura c);
 
 #endif
 
