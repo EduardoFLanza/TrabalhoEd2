@@ -18,7 +18,6 @@
  * Parâmetros:
  *   n: nó da STreap
  *   aux: ponteiro auxiliar não utilizado
- * Retorno: Nenhum
  */
 void printNodeST(SNode n, void *aux)
 {
@@ -32,36 +31,36 @@ void printNodeST(SNode n, void *aux)
 }
 
 /*
- * Descrição: Função principal do programa.
- * Parâmetros:
- *   argc: quantidade de argumentos da linha de comando
- *   argv: vetor de argumentos
- * Retorno: Código de status da execução
+ * Função principal do programa
  */
 int main(int argc, char *argv[])
 {
     int i;
 
-    char *entryArg  = NULL;
-    char *outputArg = NULL;
-    char *geoArg    = NULL;
-    char *qryArg    = NULL;
+    /* Ponteiros para os argumentos recebidos na linha de comando */
+    char *entryArg  = NULL;  // Diretório de entrada (-e)
+    char *outputArg = NULL;  // Diretório de saída (-o)
+    char *geoArg    = NULL;  // Arquivo .geo (-f)
+    char *qryArg    = NULL;  // Arquivo .qry (-q)
 
-    char *entryPath  = NULL;
-    char *outputPath = NULL;
+    /* Caminhos normalizados de entrada e saída */
+    char *entryPath  = NULL; // Caminho base de entrada
+    char *outputPath = NULL; // Caminho base de saída
 
-    char *geoFilePath = NULL;
-    char *geoFileName = NULL;
-    char *geoFile     = NULL;
+    /* Componentes do arquivo .geo */
+    char *geoFilePath = NULL; // Caminho relativo do .geo
+    char *geoFileName = NULL; // Nome do arquivo .geo
+    char *geoFile     = NULL; // Caminho completo do .geo
 
-    char *qryFilePath = NULL;
-    char *qryFileName = NULL;
-    char *qryFile     = NULL;
+    /* Componentes do arquivo .qry */
+    char *qryFilePath = NULL; // Caminho relativo do .qry
+    char *qryFileName = NULL; // Nome do arquivo .qry
+    char *qryFile     = NULL; // Caminho completo do .qry
 
     int numsectors = 0;
     double factor  = 0.0;
 
-    /* Leitura dos argumentos */
+    /* Leitura dos argumentos da linha de comando */
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-e")) {
             entryArg = argv[++i];
@@ -96,7 +95,7 @@ int main(int argc, char *argv[])
     outputPath = malloc(strlen(outputArg) + 1);
     normalizePath(outputArg, outputPath, strlen(outputArg) + 1);
 
-    /* Arquivo .geo */
+    /* Processamento do arquivo .geo */
     geoFileName = malloc(strlen(geoArg) + 1);
     geoFilePath = malloc(strlen(geoArg) + 1);
 
@@ -112,7 +111,7 @@ int main(int argc, char *argv[])
             strlen(geoFilePath) ? "/" : "",
             geoFileName);
 
-    /* Arquivo .qry */
+    /* Processamento do arquivo .qry (se existir) */
     if (qryArg) {
         qryFileName = malloc(strlen(qryArg) + 1);
         qryFilePath = malloc(strlen(qryArg) + 1);
@@ -141,13 +140,13 @@ int main(int argc, char *argv[])
 
     Style style = createTextStyle("arial", "normal", 16);
 
-    /* Leitura do .geo */
+    /* Leitura do arquivo .geo */
     if (ReadGeoFile(Elements, geoFile, style)) {
         fprintf(stderr, "Erro ao ler arquivo .geo\n");
         return 1;
     }
 
-    /* SVG inicial */
+    /* Geração do SVG inicial */
     char geoNameNoExt[256];
     getFileNameWithoutExt(geoFileName, geoNameNoExt, 256);
 
@@ -162,7 +161,7 @@ int main(int argc, char *argv[])
     sprintf(dotGeo, "%s/%s.dot", outputPath, geoNameNoExt);
     printSTrp(Elements, dotGeo);
 
-    /* Processamento do .qry */
+    /* Processamento do arquivo .qry */
     Lista Decos = createLst(-1);
 
     if (qryFile) {
@@ -211,4 +210,5 @@ int main(int argc, char *argv[])
     printf("Executado com sucesso\n");
     return 0;
 }
+
 
