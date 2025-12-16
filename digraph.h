@@ -1,172 +1,103 @@
 #ifndef _GRAPH__
 #define _GRAPH__
 
+#include <stdbool.h>
+#include "lista.h"
+
 /*
-Um Grafo direcionado  G e' constituido por um conjunto de vertices V e 
-um conjunto de arestas E, denotado por G=(V,E). 
+Um Grafo direcionado G e' constituido por um conjunto de vertices V e
+um conjunto de arestas E, denotado por G=(V,E).
 
 Pode-se associar um dado a arestas e a vertices de G.
 A cada vertice e' associado um nome.
 
 Existem tambem operacoes que possibilitam percorrer o grafo,
-invocando funcoes quando arestas do grafo 
-sao "descobertas", podendo, inclusive, interromper o percurso.
+invocando funcoes quando arestas do grafo sao "descobertas",
+podendo, inclusive, interromper o percurso.
 
-Este modulo faz parte de um trabalho de Estrutura de Dados do 
+Este modulo faz parte de um trabalho de Estrutura de Dados do
 curso de Ciencia da Computacao da Universidade Estadual de Londrina.
 E' expressamente proibido o uso de ferramentas de IA para a sua implementacao.
 A documentacao deste modulo deve ser melhorada.
 */
 
-/**
- * ============================================================================
- * Módulo: digraph
- * Finalidade:
- *   Este módulo implementa um Grafo Dirigido (DIGRAPH) utilizando uma lista de
- *   adjacência genérica (ListAdj). O módulo segue o paradigma de programação
- *   orientada a objetos em C, com ocultação de informações: nenhuma estrutura
- *   concreta é exposta neste cabeçalho.
- *
- *
- * Operações principais:
- *   - Criação e destruição do grafo.
- *   - Inserção de vértices e arestas.
- *   - Consulta de informações (nome, info, adjacência).
- *   - Busca de caminhos e varreduras (BFS, DFS).
- *
- * Observação:
- *   A implementação utiliza o módulo ListAdj como estrutura interna.
- * ============================================================================
- */
+/* Tipos opacos */
+typedef void* Graph;
+typedef int   Node;
+typedef void* Edge;
+typedef void* Info;
 
-#ifndef DIGRAPH_H
-#define DIGRAPH_H
+/* Funcoes auxiliares genericas */
+typedef void   (*freeFunc)(void*);
+typedef double (*getNumberValue)(Info);
 
-#include "lista.h"
-#include "listadj.h"
+/*
+    Invocado quando uma aresta e' descoberta/classificada durante o DFS/BFS.
+    td = tempo de descoberta, tf = tempo de finalizacao (quando aplicavel).
+    Retornar false interrompe o percurso.
+*/
+typedef bool (*procEdge)(Graph g, Edge e, int td, int tf, void *extra);
 
-/* Tipos opacos exportados */
-typedef void* Digraph;
-typedef void* GInfoVert;
-typedef void* GInfoArest;
+/*
+    Invocado quando o DFS reinicia em uma nova arvore da floresta.
+*/
+typedef bool (*dfsRestarted)(Graph g, void *extra);
 
-/* ============================================================================
- * Criação e destruição
- * ============================================================================
- */
+/* Criacao e informacoes basicas */
+Graph createGraph(int nVert);
+int   getMaxNodes(Graph g);
+int   getTotalNodes(Graph g);
+int   getTotalEdges(Graph g);
 
-/**
- * Função: dg_create
- * Finalidade:
- *   Cria uma nova instância de Digraph vazia.
- *
- * Retorno:
- *   Digraph - instância alocada. Deve ser destruída com dg_destroy().
- */
-Digraph dg_create();
+/* Operacoes sobre vertices */
+Node  addNode(Graph g, char* nome, Info info);
+Node  getNode(Graph g, char* nome);
+Info  getNodeInfo(Graph g, Node node);
+char* getNodeName(Graph g, Node node);
+void  setNodeInfo(Graph g, Node node, Info info);
 
-/**
- * Função: dg_destroy
- * Finalidade:
- *   Destrói completamente o grafo, liberando:
- *     - Todos os vértices,
- *     - Todas as arestas,
- *     - Informações associadas (caso fornecidas funções free).
- *
- * Parâmetros:
- *   GInfoVert (*freeV)(void*)  -> função para liberar InfoVert
- *   GInfoArest (*freeA)(void*) -> função para liberar InfoArest
- */
-void dg_destroy(Digraph g,
-                void (*freeV)(GInfoVert),
-                void (*freeA)(GInfoArest));
+/* Operacoes sobre arestas */
+Edge  addEdge(Graph g, Node from, Node to, Info info);
+Edge  getEdge(Graph g, Node from, Node to);
+Node  getFromNode(Graph g, Edge e);
+Node  getToNode(Graph g, Edge e);
+Info  getEdgeInfo(Graph g, Edge e);
+void  setEdgeInfo(Graph g, Edge e, Info info);
+void  removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc);
+bool  isAdjacent(Graph g, Node from, Node to);
 
-/* ============================================================================
- * Operações sobre vértices
- * ============================================================================
- */
+/* Consultas de adjacencia */
+void adjacentNodes(Graph g, Node node, Lista nosAdjacentes);
+void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes);
+void adjacentEdgesReverse(Graph g, Node node, Lista arestasAdjacentes);
 
-/**
- * Função: dg_addVertex
- * Finalidade:
- *   Insere um novo vértice de nome único no grafo.
- *
- * Parâmetros:
- *   nome - identificador textual do vértice.
- *   info - informação associada ao vértice.
- *
- * Retorno:
- *   1 se inserido com sucesso
- *   0 se já existia
- */
-int dg_addVertex(Digraph g, const char* nome, GInfoVert info);
+/* Listagens */
+void getNodeNames(Graph g, Lista nomesNodes);
+void getEdges(Graph g, Lista arestas);
+void getAllVerticesInfo(Graph g, Lista allInfo);
 
-/**
- * Função: dg_getVertexInfo
- * Finalidade:
- *   Retorna a informação associada a um vértice já existente.
- */
-GInfoVert dg_getVertexInfo(Digraph g, const char* nome);
+/* Percursos */
+bool dfs(Graph g, Node node,
+         procEdge treeEdge,
+         procEdge forwardEdge,
+         procEdge returnEdge,
+         procEdge crossEdge,
+         dfsRestarted newTree,
+         void *extra);
 
-/**
- * Função: dg_getVertexIndex
- * Finalidade:
- *   Retorna o índice interno do vértice no vetor do ListAdj.
- *   Retorna -1 se não existir.
- */
-int dg_getVertexIndex(Digraph g, const char* nome);
+bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra);
 
-/**
- * Função: dg_getVertexNameByIndex
- * Finalidade:
- *   Retorna o nome textual do vértice armazenado no índice informado.
- */
-const char* dg_getVertexNameByIndex(Digraph g, int index);
+/* Dijkstra */
+typedef void* Caminho;
 
-/**
- * Função: dg_numVertices
- * Finalidade:
- *   Retorna o número total de vértices do grafo.
- */
-int dg_numVertices(Digraph g);
+Caminho getShortestPath(Graph g, Node from, Node to,
+                        getNumberValue getDistanceFunc);
+Lista  getDijkstraList(Caminho caminho);
+double getDijkstraDistance(Caminho caminho);
 
-/* ============================================================================
- * Operações sobre arestas
- * ============================================================================
- */
-
-/**
- * Função: dg_addEdge
- * Finalidade:
- *   Insere uma aresta dirigida origem → destino.
- *
- * Parâmetros:
- *   origem  - nome do vértice de partida
- *   destino - nome do vértice de chegada
- *   peso    - peso da aresta
- *   info    - informação associada à aresta
- *
- * Retorno:
- *   1 se inserida com sucesso
- *   0 caso contrário
- */
-int dg_addEdge(Digraph g, const char* origem, const char* destino,
-               double peso, GInfoArest info);
-
-/**
- * Função: dg_getAdjList
- * Finalidade:
- *   Retorna a lista de arestas que saem de um vértice.
- */
-Lista dg_getAdjList(Digraph g, const char* nome);
-
-/* ============================================================================
- * Capacidades extras (opcional)
- * ============================================================================
- */
-
-void dg_bfs(Digraph g, const char* start, void (*visit)(const char*));
-void dg_dfs(Digraph g, const char* start, void (*visit)(const char*));
-Lista dg_shortestPath(Digraph g, const char* origem, const char* destino);
+/* Destruicao */
+void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc);
+void freeCaminho(Caminho caminho);
 
 #endif
+
