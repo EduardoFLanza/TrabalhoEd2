@@ -1,59 +1,33 @@
-/**
- * Módulo: lista
- * Finalidade:
- *     Este módulo implementa uma lista simplesmente encadeada genérica,
- *     capaz de armazenar ponteiros para qualquer tipo de elemento.
- *
- *     Uma instância de Lista representa uma coleção ordenada de elementos,
- *     onde cada célula contém:
- *         - um ponteiro genérico para conteúdo (void*)
- *         - um ponteiro para a próxima célula
- *
- *     A lista oferece operações para:
- *         - criação e destruição
- *         - inserção ao final
- *         - iteração sequencial (first/next)
- *         - remoção de uma posição específica
- *         - obtenção de tamanho
- *
- *     Este módulo segue o princípio de encapsulamento:
- *         - Tipos concretos são definidos apenas neste arquivo (.c).
- *         - O header lista.h expõe apenas tipos opacos e protótipos.
- */
-
 #include "lista.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Estruturas internas */
+/* Implementação interna */
 
-struct StNode {
-    struct StNode *prox, *ant;
+typedef struct StNode {
+    struct StNode *prox;
+    struct StNode *ant;
     Item info;
-};
+} Node;
 
-struct StLista {
-    struct StNode *prim, *ult;
+typedef struct StLista {
+    Node *prim;
+    Node *ult;
     int capac;
     int length;
-};
+} ListaImpl;
 
-typedef struct StLista ListaImpl;
-typedef struct StNode Node;
-
-struct StIterator {
+typedef struct StIterator {
     Node *curr;
     bool reverso;
-};
-
-typedef struct StIterator IteratorImpl;
+} IteratorImpl;
 
 /* Operações básicas */
 
 Lista createLst(int capacidade)
 {
-    ListaImpl *lst = (ListaImpl *) malloc(sizeof(ListaImpl));
+    ListaImpl *lst = malloc(sizeof(ListaImpl));
     lst->prim = NULL;
     lst->ult = NULL;
     lst->capac = capacidade;
@@ -63,179 +37,174 @@ Lista createLst(int capacidade)
 
 int lengthLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return lst->length;
+    return ((ListaImpl *)L)->length;
 }
 
 int maxLengthLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return (lst->capac < 0) ? -1 : lst->capac;
+    ListaImpl *lst = (ListaImpl *)L;
+    return lst->capac;
 }
 
 bool isEmptyLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return lst->length == 0;
+    return ((ListaImpl *)L)->length == 0;
 }
 
 bool isFullLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return lst->length == lst->capac;
+    ListaImpl *lst = (ListaImpl *)L;
+    if (lst->capac < 0)
+        return false;
+    return lst->length >= lst->capac;
 }
 
 Posic insertLst(Lista L, Item info)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *newNode = (Node *) malloc(sizeof(Node));
+    ListaImpl *lst = (ListaImpl *)L;
 
-    newNode->info = info;
-    newNode->prox = NULL;
-    newNode->ant = lst->ult;
+    if (isFullLst(L))
+        return NULL;
 
-    if (isEmptyLst(L))
-        lst->prim = newNode;
+    Node *n = malloc(sizeof(Node));
+    n->info = info;
+    n->prox = NULL;
+    n->ant = lst->ult;
+
+    if (lst->ult)
+        lst->ult->prox = n;
     else
-        lst->ult->prox = newNode;
+        lst->prim = n;
 
-    lst->ult = newNode;
+    lst->ult = n;
     lst->length++;
-    return newNode;
+    return n;
 }
 
 Item popLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
+    ListaImpl *lst = (ListaImpl *)L;
 
-    if (isEmptyLst(L)) {
-        printf("ERRO: popLst em lista vazia\n");
+    if (isEmptyLst(L))
         return NULL;
-    }
 
-    Node *node = lst->prim;
-    Item info = node->info;
-    removeLst(L, node);
-    return info;
+    Node *n = lst->prim;
+    Item it = n->info;
+    removeLst(L, n);
+    return it;
 }
 
 void removeLst(Lista L, Posic p)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = (Node *) p;
+    ListaImpl *lst = (ListaImpl *)L;
+    Node *n = (Node *)p;
 
-    if (!node) {
-        printf("ERRO: removeLst com posicao invalida\n");
+    if (!n)
         return;
-    }
 
-    if (node->ant)
-        node->ant->prox = node->prox;
+    if (n->ant)
+        n->ant->prox = n->prox;
     else
-        lst->prim = node->prox;
+        lst->prim = n->prox;
 
-    if (node->prox)
-        node->prox->ant = node->ant;
+    if (n->prox)
+        n->prox->ant = n->ant;
     else
-        lst->ult = node->ant;
+        lst->ult = n->ant;
 
-    free(node);
+    free(n);
     lst->length--;
 }
 
 Item getLst(Lista L, Posic p)
 {
-    Node *node = (Node *) p;
-
-    if (!node) {
-        printf("ERRO: getLst com posicao invalida\n");
+    Node *n = (Node *)p;
+    if (!n)
         return NULL;
-    }
-
-    return node->info;
+    return n->info;
 }
 
 Posic insertBeforeLst(Lista L, Posic p, Item info)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = (Node *) p;
-    Node *newNode = (Node *) malloc(sizeof(Node));
+    ListaImpl *lst = (ListaImpl *)L;
+    Node *ref = (Node *)p;
 
-    newNode->info = info;
-    newNode->prox = node;
-    newNode->ant = node->ant;
+    if (!ref || isFullLst(L))
+        return NULL;
 
-    if (node->ant)
-        node->ant->prox = newNode;
+    Node *n = malloc(sizeof(Node));
+    n->info = info;
+    n->prox = ref;
+    n->ant = ref->ant;
+
+    if (ref->ant)
+        ref->ant->prox = n;
     else
-        lst->prim = newNode;
+        lst->prim = n;
 
-    node->ant = newNode;
+    ref->ant = n;
     lst->length++;
-    return newNode;
+    return n;
 }
 
 Posic insertAfterLst(Lista L, Posic p, Item info)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = (Node *) p;
-    Node *newNode = (Node *) malloc(sizeof(Node));
+    ListaImpl *lst = (ListaImpl *)L;
+    Node *ref = (Node *)p;
 
-    newNode->info = info;
-    newNode->ant = node;
-    newNode->prox = node->prox;
+    if (!ref || isFullLst(L))
+        return NULL;
 
-    if (node->prox)
-        node->prox->ant = newNode;
+    Node *n = malloc(sizeof(Node));
+    n->info = info;
+    n->ant = ref;
+    n->prox = ref->prox;
+
+    if (ref->prox)
+        ref->prox->ant = n;
     else
-        lst->ult = newNode;
+        lst->ult = n;
 
-    node->prox = newNode;
+    ref->prox = n;
     lst->length++;
-    return newNode;
+    return n;
 }
 
 Posic getFirstLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return lst->prim;
-}
-
-Posic getNextLst(Lista L, Posic p)
-{
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = (Node *) p;
-
-    if (lst->ult == node)
-        return NIL;
-    return node->prox;
+    return ((ListaImpl *)L)->prim;
 }
 
 Posic getLastLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    return isEmptyLst(L) ? NIL : lst->ult;
+    return ((ListaImpl *)L)->ult;
 }
 
-Posic getPrevLst(Lista L, Posic p)
+Posic getNextLst(Lista L, Posic p)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = (Node *) p;
+    Node *n = (Node *)p;
+    if (!n)
+        return NULL;
+    return n->prox;
+}
 
-    if (lst->prim == node)
-        return NIL;
-    return node->ant;
+Posic getPreviousLst(Lista L, Posic p)
+{
+    Node *n = (Node *)p;
+    if (!n)
+        return NULL;
+    return n->ant;
 }
 
 void killLst(Lista L)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Node *node = lst->prim;
+    ListaImpl *lst = (ListaImpl *)L;
+    Node *n = lst->prim;
 
-    while (node) {
-        Node *next = node->prox;
-        free(node);
-        node = next;
+    while (n) {
+        Node *next = n->prox;
+        free(n);
+        n = next;
     }
 
     free(lst);
@@ -245,47 +214,45 @@ void killLst(Lista L)
 
 Iterador createIterador(Lista L, bool reverso)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    IteratorImpl *iter = (IteratorImpl *) malloc(sizeof(IteratorImpl));
-
-    iter->reverso = reverso;
-    iter->curr = reverso ? lst->ult : lst->prim;
-    return iter;
+    ListaImpl *lst = (ListaImpl *)L;
+    IteratorImpl *it = malloc(sizeof(IteratorImpl));
+    it->reverso = reverso;
+    it->curr = reverso ? lst->ult : lst->prim;
+    return it;
 }
 
 void setIteratorPosition(Lista L, Iterador it, Posic p)
 {
-    IteratorImpl *iter = (IteratorImpl *) it;
-    iter->curr = (Node *) p;
+    ((IteratorImpl *)it)->curr = (Node *)p;
 }
 
 bool isIteratorEmpty(Lista L, Iterador it)
 {
-    IteratorImpl *iter = (IteratorImpl *) it;
-    return iter->curr == NULL;
+    return ((IteratorImpl *)it)->curr == NULL;
 }
 
 Iterador getIteratorNext(Lista L, Iterador it)
 {
-    IteratorImpl *iter = (IteratorImpl *) it;
+    IteratorImpl *iter = (IteratorImpl *)it;
 
     if (!iter->curr)
         return NULL;
 
     iter->curr = iter->reverso ? iter->curr->ant : iter->curr->prox;
-    return iter;
+    return it;
 }
 
 Item getIteratorItem(Lista L, Iterador it)
 {
-    IteratorImpl *iter = (IteratorImpl *) it;
-    return iter->curr ? iter->curr->info : NULL;
+    IteratorImpl *iter = (IteratorImpl *)it;
+    if (!iter->curr)
+        return NULL;
+    return iter->curr->info;
 }
 
 Posic getIteratorPosic(Lista L, Iterador it)
 {
-    IteratorImpl *iter = (IteratorImpl *) it;
-    return iter->curr;
+    return ((IteratorImpl *)it)->curr;
 }
 
 void killIterator(Lista L, Iterador it)
@@ -293,34 +260,34 @@ void killIterator(Lista L, Iterador it)
     free(it);
 }
 
-/* Funções de ordem superior */
+/* High-order functions */
 
 Lista map(Lista L, Apply f)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Lista newLst = createLst(lst->capac);
+    ListaImpl *lst = (ListaImpl *)L;
+    Lista newL = createLst(lst->capac);
 
     for (Node *n = lst->prim; n; n = n->prox)
-        insertLst(newLst, f(n->info));
+        insertLst(newL, f(n->info));
 
-    return newLst;
+    return newL;
 }
 
 Lista filter(Lista L, Check f)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Lista newLst = createLst(lst->capac);
+    ListaImpl *lst = (ListaImpl *)L;
+    Lista newL = createLst(lst->capac);
 
     for (Node *n = lst->prim; n; n = n->prox)
         if (f(n->info))
-            insertLst(newLst, n->info);
+            insertLst(newL, n->info);
 
-    return newLst;
+    return newL;
 }
 
 void fold(Lista L, ApplyClosure f, Clausura c)
 {
-    ListaImpl *lst = (ListaImpl *) L;
+    ListaImpl *lst = (ListaImpl *)L;
 
     for (Node *n = lst->prim; n; n = n->prox)
         f(n->info, c);
@@ -328,12 +295,12 @@ void fold(Lista L, ApplyClosure f, Clausura c)
 
 Lista filterClausure(Lista L, CheckClausure f, Clausura c)
 {
-    ListaImpl *lst = (ListaImpl *) L;
-    Lista newLst = createLst(lst->capac);
+    ListaImpl *lst = (ListaImpl *)L;
+    Lista newL = createLst(lst->capac);
 
     for (Node *n = lst->prim; n; n = n->prox)
         if (f(n->info, c))
-            insertLst(newLst, n->info);
+            insertLst(newL, n->info);
 
-    return newLst;
+    return newL;
 }
