@@ -3,30 +3,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <math.h>
 
-typedef struct node {
+/* ======================= ESTRUTURAS ======================= */
+
+typedef struct snode {
     double x, y;
     SInfo info;
     unsigned priority;
-    struct node *l, *r;
+    struct snode *left, *right;
 } Node;
 
-typedef struct streap {
+typedef struct {
     Node *root;
     double eps;
 } ST;
 
-/* util */
+/* ======================= UTIL ======================= */
 
-static int rand_init = 0;
+static int seeded = 0;
 
-static unsigned rnd_priority() {
-    if (!rand_init) {
+static unsigned rndPriority() {
+    if (!seeded) {
         srand((unsigned)time(NULL));
-        rand_init = 1;
+        seeded = 1;
     }
-    return ((unsigned)rand() << 16) ^ (unsigned)rand();
+    return ((unsigned)rand() << 16) ^ rand();
 }
 
 static int cmp(ST *t, double x1, double y1, double x2, double y2) {
@@ -38,133 +39,131 @@ static int cmp(ST *t, double x1, double y1, double x2, double y2) {
     return 0;
 }
 
-/* rotações */
-
-static Node* rotR(Node *y) {
-    Node *x = y->l;
-    y->l = x->r;
-    x->r = y;
-    return x;
-}
-
-static Node* rotL(Node *x) {
-    Node *y = x->r;
-    x->r = y->l;
-    y->l = x;
-    return y;
-}
-
-static Node* newNode(double x, double y, SInfo info) {
+static Node *newNode(double x, double y, SInfo info) {
     Node *n = malloc(sizeof(Node));
     if (!n) return NULL;
     n->x = x;
     n->y = y;
     n->info = info;
-    n->priority = rnd_priority();
-    n->l = n->r = NULL;
+    n->priority = rndPriority();
+    n->left = n->right = NULL;
     return n;
 }
 
-/* inserção */
+/* ======================= ROTAÇÕES ======================= */
 
-static Node* insertRec(ST *s, Node *r, double x, double y, SInfo info, int *ok) {
+static Node *rotRight(Node *y) {
+    Node *x = y->left;
+    y->left = x->right;
+    x->right = y;
+    return x;
+}
+
+static Node *rotLeft(Node *x) {
+    Node *y = x->right;
+    x->right = y->left;
+    y->left = x;
+    return y;
+}
+
+/* ======================= INSERÇÃO ======================= */
+
+static Node *insertRec(ST *t, Node *r, double x, double y, SInfo info, int *ok) {
     if (!r) {
         *ok = 1;
         return newNode(x, y, info);
     }
 
-    int c = cmp(s, x, y, r->x, r->y);
-
+    int c = cmp(t, x, y, r->x, r->y);
     if (c == 0) {
         *ok = 0;
         return r;
     }
 
     if (c < 0) {
-        r->l = insertRec(s, r->l, x, y, info, ok);
-        if (r->l && r->l->priority > r->priority)
-            r = rotR(r);
+        r->left = insertRec(t, r->left, x, y, info, ok);
+        if (r->left && r->left->priority > r->priority)
+            r = rotRight(r);
     } else {
-        r->r = insertRec(s, r->r, x, y, info, ok);
-        if (r->r && r->r->priority > r->priority)
-            r = rotL(r);
+        r->right = insertRec(t, r->right, x, y, info, ok);
+        if (r->right && r->right->priority > r->priority)
+            r = rotLeft(r);
     }
     return r;
 }
 
-/* busca */
+/* ======================= BUSCA ======================= */
 
-static Node* searchRec(ST *s, Node *r, double x, double y) {
+static Node *searchRec(ST *t, Node *r, double x, double y) {
     if (!r) return NULL;
-    int c = cmp(s, x, y, r->x, r->y);
+    int c = cmp(t, x, y, r->x, r->y);
     if (c == 0) return r;
-    if (c < 0) return searchRec(s, r->l, x, y);
-    return searchRec(s, r->r, x, y);
+    if (c < 0) return searchRec(t, r->left, x, y);
+    return searchRec(t, r->right, x, y);
 }
 
-/* remoção */
+/* ======================= REMOÇÃO ======================= */
 
-static Node* removeRec(ST *s, Node *r, double x, double y, SInfo *ret, int *rem) {
+static Node *removeRec(ST *t, Node *r, double x, double y, SInfo *ret, int *done) {
     if (!r) return NULL;
 
-    int c = cmp(s, x, y, r->x, r->y);
+    int c = cmp(t, x, y, r->x, r->y);
 
     if (c < 0)
-        r->l = removeRec(s, r->l, x, y, ret, rem);
+        r->left = removeRec(t, r->left, x, y, ret, done);
     else if (c > 0)
-        r->r = removeRec(s, r->r, x, y, ret, rem);
+        r->right = removeRec(t, r->right, x, y, ret, done);
     else {
         *ret = r->info;
-        *rem = 1;
+        *done = 1;
 
-        if (!r->l) {
-            Node *tmp = r->r;
+        if (!r->left) {
+            Node *tmp = r->right;
             free(r);
             return tmp;
         }
-        if (!r->r) {
-            Node *tmp = r->l;
+        if (!r->right) {
+            Node *tmp = r->left;
             free(r);
             return tmp;
         }
 
-        if (r->l->priority > r->r->priority) {
-            r = rotR(r);
-            r->r = removeRec(s, r->r, x, y, ret, rem);
+        if (r->left->priority > r->right->priority) {
+            r = rotRight(r);
+            r->right = removeRec(t, r->right, x, y, ret, done);
         } else {
-            r = rotL(r);
-            r->l = removeRec(s, r->l, x, y, ret, rem);
+            r = rotLeft(r);
+            r->left = removeRec(t, r->left, x, y, ret, done);
         }
     }
     return r;
 }
 
-/* API */
+/* ======================= API ======================= */
 
-STreap st_create(double eps) {
-    ST *s = calloc(1, sizeof(ST));
-    if (!s) return NULL;
-    s->eps = (eps > 0) ? eps : 1e-9;
-    return s;
+STreap st_create(double epsilon) {
+    ST *t = calloc(1, sizeof(ST));
+    if (!t) return NULL;
+    t->eps = (epsilon > 0) ? epsilon : 1e-9;
+    return t;
 }
 
 SNode st_insert(STreap t, double x, double y, SInfo info) {
-    ST *s = t;
+    ST *st = t;
     int ok = 0;
-    s->root = insertRec(s, s->root, x, y, info, &ok);
-    return ok ? searchRec(s, s->root, x, y) : NULL;
+    st->root = insertRec(st, st->root, x, y, info, &ok);
+    return ok ? searchRec(st, st->root, x, y) : NULL;
 }
 
 SNode st_search(STreap t, double x, double y) {
-    ST *s = t;
-    return searchRec(s, s->root, x, y);
+    return searchRec((ST *)t, ((ST *)t)->root, x, y);
 }
 
 SInfo removeSTrp(STreap t, double x, double y) {
-    ST *s = t;
+    ST *st = t;
     SInfo ret = NULL;
-    int rem = 0;
-    s->root = removeRec(s, s->root, x, y, &ret, &rem);
+    int done = 0;
+    st->root = removeRec(st, st->root, x, y, &ret, &done);
     return ret;
 }
 
@@ -175,7 +174,7 @@ SInfo deleteNodeSTrp(STreap t, SNode n) {
 }
 
 SInfo st_getInfo(SNode n) {
-    return ((Node*)n)->info;
+    return ((Node *)n)->info;
 }
 
 void st_getKey(SNode n, double *x, double *y) {
@@ -184,60 +183,61 @@ void st_getKey(SNode n, double *x, double *y) {
     if (y) *y = nd->y;
 }
 
-/* percursos */
-
-static void inorder(Node *n, void (*v)(SNode), ST *s) {
-    if (!n) return;
-    inorder(n->l, v, s);
-    v(n);
-    inorder(n->r, v, s);
+void updateInfoSTrp(STreap t, SNode n, SInfo i) {
+    (void)t;
+    if (n) ((Node *)n)->info = i;
 }
 
-void st_inorderX(STreap t, void (*visit)(SNode)) {
-    ST *s = t;
-    inorder(s->root, visit, s);
-}
+/* ======================= PERCURSOS ======================= */
 
-static void visitRec(Node *n, FvisitaNo f, void *aux) {
+static void preRec(Node *n, FvisitaNo f, void *aux) {
     if (!n) return;
     f(n->info, n->x, n->y, n->x, n->y, n->x, n->y, aux);
-    visitRec(n->l, f, aux);
-    visitRec(n->r, f, aux);
+    preRec(n->left, f, aux);
+    preRec(n->right, f, aux);
+}
+
+static void inRec(Node *n, FvisitaNo f, void *aux) {
+    if (!n) return;
+    inRec(n->left, f, aux);
+    f(n->info, n->x, n->y, n->x, n->y, n->x, n->y, aux);
+    inRec(n->right, f, aux);
 }
 
 void percursoProfundidade(STreap t, FvisitaNo f, void *aux) {
-    visitRec(((ST*)t)->root, f, aux);
+    preRec(((ST *)t)->root, f, aux);
 }
 
 void percursoSimetrico(STreap t, FvisitaNo f, void *aux) {
-    st_inorderX(t, (void (*)(SNode))f);
+    inRec(((ST *)t)->root, f, aux);
 }
 
 void percursoLargura(STreap t, FvisitaNo f, void *aux) {
     Lista q = criaLista();
-    Node *r = ((ST*)t)->root;
+    Node *r = ((ST *)t)->root;
     if (!r) return;
+
     inserirInicio(q, r);
     while (!isListaVazia(q)) {
         Node *n = removerFim(q);
         f(n->info, n->x, n->y, n->x, n->y, n->x, n->y, aux);
-        if (n->l) inserirInicio(q, n->l);
-        if (n->r) inserirInicio(q, n->r);
+        if (n->left) inserirInicio(q, n->left);
+        if (n->right) inserirInicio(q, n->right);
     }
 }
 
-/* região */
+/* ======================= REGIÃO ======================= */
 
 static void rangeRec(Node *n, double x1, double y1, double x2, double y2, void (*v)(SNode)) {
     if (!n) return;
     if (n->x >= x1 && n->x <= x2 && n->y >= y1 && n->y <= y2)
         v(n);
-    rangeRec(n->l, x1, y1, x2, y2, v);
-    rangeRec(n->r, x1, y1, x2, y2, v);
+    rangeRec(n->left, x1, y1, x2, y2, v);
+    rangeRec(n->right, x1, y1, x2, y2, v);
 }
 
 void st_rangeSearch(STreap t, double xmin, double ymin, double xmax, double ymax, void (*visit)(SNode)) {
-    rangeRec(((ST*)t)->root, xmin, ymin, xmax, ymax, visit);
+    rangeRec(((ST *)t)->root, xmin, ymin, xmax, ymax, visit);
 }
 
 void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r) {
@@ -247,16 +247,16 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
     st_rangeSearch(t, x, y, x2, y2, visit);
 }
 
-/* MBB */
+/* ======================= MBB ======================= */
 
 int st_getMBB(STreap t, double *xmin, double *ymin, double *xmax, double *ymax) {
-    ST *s = t;
-    if (!s->root) return 0;
+    ST *st = t;
+    if (!st->root) return 0;
 
-    *xmin = *xmax = s->root->x;
-    *ymin = *ymax = s->root->y;
+    *xmin = *xmax = st->root->x;
+    *ymin = *ymax = st->root->y;
 
-    void v(SNode n) {
+    void visit(SNode n) {
         Node *nd = n;
         if (nd->x < *xmin) *xmin = nd->x;
         if (nd->x > *xmax) *xmax = nd->x;
@@ -264,24 +264,62 @@ int st_getMBB(STreap t, double *xmin, double *ymin, double *xmax, double *ymax) 
         if (nd->y > *ymax) *ymax = nd->y;
     }
 
-    st_inorderX(t, v);
+    st_inorderX(t, visit);
     return 1;
 }
 
-/* destruição */
+/* ======================= INORDER X ======================= */
+
+static void inorderX(Node *n, void (*v)(SNode)) {
+    if (!n) return;
+    inorderX(n->left, v);
+    v(n);
+    inorderX(n->right, v);
+}
+
+void st_inorderX(STreap t, void (*visit)(SNode)) {
+    inorderX(((ST *)t)->root, visit);
+}
+
+/* ======================= DESTROY ======================= */
 
 void st_destroy(STreap t, void (*freeInfo)(SInfo)) {
-    Lista st = criaLista();
-    Node *r = ((ST*)t)->root;
-    if (r) inserirInicio(st, r);
+    Lista s = criaLista();
+    Node *r = ((ST *)t)->root;
+    if (r) inserirInicio(s, r);
 
-    while (!isListaVazia(st)) {
-        Node *n = removerFim(st);
-        if (n->l) inserirInicio(st, n->l);
-        if (n->r) inserirInicio(st, n->r);
+    while (!isListaVazia(s)) {
+        Node *n = removerFim(s);
+        if (n->left) inserirInicio(s, n->left);
+        if (n->right) inserirInicio(s, n->right);
         if (freeInfo) freeInfo(n->info);
         free(n);
     }
-    removeLista(st, NULL);
+    removeLista(s, NULL);
     free(t);
+}
+
+/* ======================= DEBUG DOT ======================= */
+
+static void dotRec(Node *n, FILE *f) {
+    if (!n) return;
+    fprintf(f, "\"%p\" [label=\"(%.2lf,%.2lf)\"];\n", (void *)n, n->x, n->y);
+    if (n->left) {
+        fprintf(f, "\"%p\" -> \"%p\";\n", (void *)n, (void *)n->left);
+        dotRec(n->left, f);
+    }
+    if (n->right) {
+        fprintf(f, "\"%p\" -> \"%p\";\n", (void *)n, (void *)n->right);
+        dotRec(n->right, f);
+    }
+}
+
+void printSTrp(STreap t, const char *nomeArq) {
+    FILE *f = fopen(nomeArq, "w");
+    if (!f) return;
+
+    fprintf(f, "digraph STreap {\n");
+    dotRec(((ST *)t)->root, f);
+    fprintf(f, "}\n");
+    fclose(f);
 }
