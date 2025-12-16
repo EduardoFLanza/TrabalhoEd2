@@ -1,75 +1,78 @@
+/**
+ * Módulo: Quadras
+ * Finalidade:
+ *     Implementa o TAD Quadras, responsável por armazenar, indexar e
+ *     gerenciar quadras urbanas lidas do arquivo .geo.
+ *
+ *     As quadras são indexadas espacialmente por meio de uma STreap,
+ *     utilizando a coordenada (x,y) como âncora espacial, e também
+ *     associadas por identificador (id) através de uma tabela hash.
+ *
+ *     Este módulo provê operações de criação, percurso, busca espacial,
+ *     acesso por identificador, atualização de atributos e liberação
+ *     completa da estrutura.
+ */
+
 #ifndef QUADRAS_H
 #define QUADRAS_H
 
-#include <stdbool.h>
 #include "streap.h"
-#include "hash.h"
 #include "lista.h"
+#include "hash.h"
 
 /* Tipos opacos */
 typedef void* Quadras;
 typedef void* Quadra;
 
-/* Criação e destruição */
-Quadras createQuadras(void);
-void destroyQuadras(Quadras quadras);
-
-/* Inserção */
-Quadra createQuadra(
-    const char* id,
+/* Função de visita usada em percursos */
+typedef void (*FvisitaQuadra)(
+    Quadra q,
     double x, double y,
-    double w, double h,
-    const char* sw,
-    const char* cfill,
-    const char* cstrk
-);
-
-void insertQuadra(Quadras quadras, Quadra quadra);
-
-/* Remoção */
-void removeQuadra(Quadras quadras, Quadra quadra);
-
-/* Busca */
-Quadra getQuadraById(Quadras quadras, const char* id);
-
-/* Percursos */
-void traverseQuadras(
-    Quadras quadras,
-    FvisitaNo visit,
+    double mbbX1, double mbbY1,
+    double mbbX2, double mbbY2,
     void* aux
 );
 
-/* Busca por região */
-void getQuadrasInRegion(
+/* Cria e processa as quadras a partir de um arquivo .geo */
+Quadras processGeoFile(const char* path);
+
+/* Percorre todas as quadras armazenadas (percurso em largura da STreap) */
+void percorrerQuadras(Quadras quadras, FvisitaQuadra f, void* aux);
+
+/* Busca quadras contidas em uma região retangular */
+void getQuadrasRegion(
     Quadras quadras,
     double x, double y,
     double w, double h,
     Lista resultado
 );
 
-/* Getters */
-const char* quadraGetId(Quadra q);
-double quadraGetX(Quadra q);
-double quadraGetY(Quadra q);
-double quadraGetW(Quadra q);
-double quadraGetH(Quadra q);
-const char* quadraGetFill(Quadra q);
-const char* quadraGetStroke(Quadra q);
-const char* quadraGetSW(Quadra q);
-double quadraGetOpacity(Quadra q);
+/* Retorna uma quadra a partir de seu identificador */
+Quadra getQuadraByID(Quadras quadras, const char* id);
 
-/* Setters */
-void quadraSetFill(Quadra q, const char* cfill);
-void quadraSetStroke(Quadra q, const char* cstrk);
-void quadraSetOpacity(Quadra q, double opacity);
+/* Funções de acesso aos atributos da quadra */
+const char* getQuadraID(Quadra q);
+double getQuadraX(Quadra q);
+double getQuadraY(Quadra q);
+double getQuadraWidth(Quadra q);
+double getQuadraHeight(Quadra q);
+const char* getQuadraCFill(Quadra q);
+const char* getQuadraCStrk(Quadra q);
+const char* getQuadraSW(Quadra q);
+double getQuadraOpacidade(Quadra q);
 
-/* Acesso direto à STreap (quando necessário) */
-STreap quadrasGetSTreap(Quadras quadras);
+/* Funções de modificação de atributos */
+void setQuadraCFill(Quadra q, const char* cfill);
+void setQuadraCStrk(Quadra q, const char* cstrk);
+void setQuadraOpacidade(Quadra q, double opacidade);
 
-/* Utilitários */
-bool quadraInside(
-    double rx, double ry, double rw, double rh,
-    double qx, double qy, double qw, double qh
-);
+/* Remove uma quadra da estrutura */
+void removerQuadra(Quadras quadras, Quadra q);
 
-#endif
+/* Retorna a STreap interna (uso controlado) */
+STreap getQuadrasSTrp(Quadras quadras);
+
+/* Libera toda a estrutura de quadras */
+void freeQuadras(Quadras quadras, void* aux);
+
+#endif /* QUADRAS_H */
