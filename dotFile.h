@@ -1,36 +1,31 @@
 #ifndef DOT_FILE_H
 #define DOT_FILE_H
 
-#include <stdio.h>
 #include "streap.h"
 
 /*
  * Módulo: dotFile
  *
  * Descrição:
- *     Este módulo provê operações para exportação de uma estrutura Streap
- *     (árvore balanceada probabilística) em um arquivo de texto no formato DOT,
- *     compatível com a ferramenta Graphviz.
+ *     Este módulo provê funções para exportar uma STreap
+ *     para um arquivo texto no formato DOT, compatível com
+ *     a ferramenta Graphviz.
  *
- *     A exportação percorre toda a Streap, registrando seus nós e arestas,
- *     permitindo a visualização da estrutura hierárquica da árvore.
+ *     A árvore é percorrida e cada nó é representado por sua
+ *     âncora (x,y) e arestas pai-filho.
  *
  * Abstração:
- *     - Este módulo não cria nem mantém uma entidade própria.
- *     - Ele opera sobre uma instância existente de Streap.
- *
- * Importante:
- *     Uma instância manipulada por este módulo é apenas lida durante o processo
- *     de exportação, não havendo qualquer modificação estrutural.
+ *     - A estrutura interna da STreap não é acessada.
+ *     - A exportação utiliza apenas a interface pública do módulo STreap.
  */
 
 /*
- * Função: DrawStreap
- * Descrição: Exporta uma Streap para um arquivo no formato DOT.
- * Parâmetros: tree – instância da Streap a ser exportada.
- *             fullfilename – caminho completo do arquivo .dot a ser gerado.
+ * Função: DrawSTreap
+ * Descrição: Exporta a STreap para um arquivo no formato DOT.
+ * Parâmetros: t – instância da STreap.
+ *             fullfilename – caminho completo do arquivo .dot.
  * Retorno: Nenhum.
  */
-void DrawStreap(Streap tree, char *fullfilename);
+void DrawSTreap(STreap t, char *fullfilename);
 
 #endif
