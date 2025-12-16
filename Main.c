@@ -13,9 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ========================================================= */
-/* Função auxiliar de debug                                  */
-/* ========================================================= */
+/*
+ * Descrição: Imprime informações de um nó da STreap para depuração.
+ * Parâmetros:
+ *   n: nó da STreap
+ *   aux: ponteiro auxiliar não utilizado
+ * Retorno: Nenhum
+ */
 void printNodeST(SNode n, void *aux)
 {
     double x, y;
@@ -27,9 +31,13 @@ void printNodeST(SNode n, void *aux)
     printf("(%.2lf, %.2lf) [%d]\n", x, y, getEntId(e));
 }
 
-/* ========================================================= */
-/* MAIN                                                       */
-/* ========================================================= */
+/*
+ * Descrição: Função principal do programa.
+ * Parâmetros:
+ *   argc: quantidade de argumentos da linha de comando
+ *   argv: vetor de argumentos
+ * Retorno: Código de status da execução
+ */
 int main(int argc, char *argv[])
 {
     int i;
@@ -53,9 +61,7 @@ int main(int argc, char *argv[])
     int numsectors = 0;
     double factor  = 0.0;
 
-    /* ===================================================== */
-    /* Leitura dos argumentos                                */
-    /* ===================================================== */
+    /* Leitura dos argumentos */
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-e")) {
             entryArg = argv[++i];
@@ -77,9 +83,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /* ===================================================== */
-    /* Diretório de entrada                                  */
-    /* ===================================================== */
+    /* Diretório de entrada */
     if (entryArg) {
         entryPath = malloc(strlen(entryArg) + 1);
         normalizePath(entryArg, entryPath, strlen(entryArg) + 1);
@@ -88,15 +92,11 @@ int main(int argc, char *argv[])
         strcpy(entryPath, ".");
     }
 
-    /* ===================================================== */
-    /* Diretório de saída                                    */
-    /* ===================================================== */
+    /* Diretório de saída */
     outputPath = malloc(strlen(outputArg) + 1);
     normalizePath(outputArg, outputPath, strlen(outputArg) + 1);
 
-    /* ===================================================== */
-    /* Arquivo .geo                                          */
-    /* ===================================================== */
+    /* Arquivo .geo */
     geoFileName = malloc(strlen(geoArg) + 1);
     geoFilePath = malloc(strlen(geoArg) + 1);
 
@@ -112,9 +112,7 @@ int main(int argc, char *argv[])
             strlen(geoFilePath) ? "/" : "",
             geoFileName);
 
-    /* ===================================================== */
-    /* Arquivo .qry                                          */
-    /* ===================================================== */
+    /* Arquivo .qry */
     if (qryArg) {
         qryFileName = malloc(strlen(qryArg) + 1);
         qryFilePath = malloc(strlen(qryArg) + 1);
@@ -132,9 +130,7 @@ int main(int argc, char *argv[])
                 qryFileName);
     }
 
-    /* ===================================================== */
-    /* Inicialização da STreap                               */
-    /* ===================================================== */
+    /* Inicialização da STreap */
     factor /= 100.0;
 
     STreap Elements = st_create(1e-6);
@@ -145,17 +141,13 @@ int main(int argc, char *argv[])
 
     Style style = createTextStyle("arial", "normal", 16);
 
-    /* ===================================================== */
-    /* Leitura do .geo                                       */
-    /* ===================================================== */
+    /* Leitura do .geo */
     if (ReadGeoFile(Elements, geoFile, style)) {
         fprintf(stderr, "Erro ao ler arquivo .geo\n");
         return 1;
     }
 
-    /* ===================================================== */
-    /* SVG inicial                                           */
-    /* ===================================================== */
+    /* SVG inicial */
     char geoNameNoExt[256];
     getFileNameWithoutExt(geoFileName, geoNameNoExt, 256);
 
@@ -170,9 +162,7 @@ int main(int argc, char *argv[])
     sprintf(dotGeo, "%s/%s.dot", outputPath, geoNameNoExt);
     printSTrp(Elements, dotGeo);
 
-    /* ===================================================== */
-    /* Processamento do .qry                                 */
-    /* ===================================================== */
+    /* Processamento do .qry */
     Lista Decos = createLst(-1);
 
     if (qryFile) {
@@ -201,9 +191,7 @@ int main(int argc, char *argv[])
         printSTrp(Elements, dotFinal);
     }
 
-    /* ===================================================== */
-    /* Liberação de memória                                  */
-    /* ===================================================== */
+    /* Liberação de memória */
     removeLista(Decos, NULL);
     st_destroy(Elements, freeEntity);
     free(style);
@@ -223,3 +211,4 @@ int main(int argc, char *argv[])
     printf("Executado com sucesso\n");
     return 0;
 }
+
