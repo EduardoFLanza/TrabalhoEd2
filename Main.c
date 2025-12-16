@@ -1,105 +1,225 @@
+#include "STreap.h"
+#include "entity.h"
+#include "geoFile.h"
+#include "qryFile.h"
+#include "dotFile.h"
+#include "cmdsFiles.h"
+#include "path.h"
+#include "drawSvg.h"
+#include "actions.h"
+#include "lista.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "args.h"
-#include "picture.h"
-#include "boundingbox.h"
-#include "digraph.h"
-#include "hash_table.h"
-#include "geoFile.h"
-#include "viaFile.h"
-#include "qryFile.h"
-#include "writer.h"
+/* ========================================================= */
+/* Função auxiliar de debug                                  */
+/* ========================================================= */
+void printNodeST(SNode n, void *aux)
+{
+    double x, y;
+    Entity e;
 
-int main(int argc, char** argv) {
+    st_getKey(n, &x, &y);
+    e = st_getInfo(n);
 
-    /* ----------------------------------------------------------
-       1. Leitura e validação dos parâmetros de linha de comando
-       ---------------------------------------------------------- */
-    Parametros params = lerParametros(argc, argv);
+    printf("(%.2lf, %.2lf) [%d]\n", x, y, getEntId(e));
+}
 
-    char *dirE = args_getEntrada(params);
-    char *fileF = args_getGeo(params);
-    char *fileQ = args_getQry(params);
-    char *dirO  = args_getOut(params);
+/* ========================================================= */
+/* MAIN                                                       */
+/* ========================================================= */
+int main(int argc, char *argv[])
+{
+    int i;
 
-    /* ----------------------------------------------------------
-       2. Criação das principais estruturas de dados do sistema
-       ---------------------------------------------------------- */
-    Picture pic = picture_create();
-    BBox bb     = bb_create();
-    Digraph g   = dg_create();
-    HashTable quadras = ht_create(1024);
+    char *entryArg  = NULL;
+    char *outputArg = NULL;
+    char *geoArg    = NULL;
+    char *qryArg    = NULL;
 
-    /* ----------------------------------------------------------
-       3. Processamento do arquivo .geo
-       ---------------------------------------------------------- */
-    char path_geo[1024];
-    if (dirE)
-        snprintf(path_geo, sizeof(path_geo), "%s/%s", dirE, fileF);
-    else
-        snprintf(path_geo, sizeof(path_geo), "%s", fileF);
+    char *entryPath  = NULL;
+    char *outputPath = NULL;
 
-    FILE *fgeo = fopen(path_geo, "r");
-    if (!fgeo) {
-        fprintf(stderr, "Erro ao abrir arquivo .geo: %s\n", path_geo);
-        liberarParametros(&params);
-        return 1;
-    }
+    char *geoFilePath = NULL;
+    char *geoFileName = NULL;
+    char *geoFile     = NULL;
 
-    geo_processar(fgeo, pic, bb, quadras);
-    fclose(fgeo);
+    char *qryFilePath = NULL;
+    char *qryFileName = NULL;
+    char *qryFile     = NULL;
 
-    /* ----------------------------------------------------------
-       4. Processamento opcional do arquivo .qry
-       ---------------------------------------------------------- */
-    if (fileQ != NULL) {
-        char path_qry[1024];
+    int numsectors = 0;
+    double factor  = 0.0;
 
-        if (dirE)
-            snprintf(path_qry, sizeof(path_qry), "%s/%s", dirE, fileQ);
-        else
-            snprintf(path_qry, sizeof(path_qry), "%s", fileQ);
-
-        FILE *fq = fopen(path_qry, "r");
-        if (fq != NULL) {
-            qry_processar(fq, pic, bb, g, quadras, dirO);
-            fclose(fq);
-        } else {
-            fprintf(stderr, "Aviso: não foi possível abrir o arquivo .qry: %s\n",
-                    path_qry);
+    /* ===================================================== */
+    /* Leitura dos argumentos                                */
+    /* ===================================================== */
+    for (i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "-e")) {
+            entryArg = argv[++i];
+        } else if (!strcmp(argv[i], "-o")) {
+            outputArg = argv[++i];
+        } else if (!strcmp(argv[i], "-f")) {
+            geoArg = argv[++i];
+        } else if (!strcmp(argv[i], "-q")) {
+            qryArg = argv[++i];
+        } else if (!strcmp(argv[i], "-ns")) {
+            numsectors = atoi(argv[++i]);
+        } else if (!strcmp(argv[i], "-fd")) {
+            factor = atof(argv[++i]);
         }
     }
 
-    /* ----------------------------------------------------------
-       5. Geração dos arquivos de saída (SVG / TXT)
-       ---------------------------------------------------------- */
-    char base[256];
-    strncpy(base, fileF, sizeof(base));
-    char *dot = strrchr(base, '.');
-    if (dot) *dot = '\0';
+    if (!outputArg || !geoArg) {
+        fprintf(stderr, "Erro: parâmetros obrigatórios ausentes\n");
+        return 1;
+    }
 
-    char svg_geo[1024];
-    char svg_qry[1024];
-    char txt_qry[1024];
+    /* ===================================================== */
+    /* Diretório de entrada                                  */
+    /* ===================================================== */
+    if (entryArg) {
+        entryPath = malloc(strlen(entryArg) + 1);
+        normalizePath(entryArg, entryPath, strlen(entryArg) + 1);
+    } else {
+        entryPath = malloc(2);
+        strcpy(entryPath, ".");
+    }
 
-    snprintf(svg_geo, sizeof(svg_geo), "%s/%s.svg",   dirO, base);
-    snprintf(svg_qry, sizeof(svg_qry), "%s/%s-q.svg", dirO, base);
-    snprintf(txt_qry, sizeof(txt_qry), "%s/%s-q.txt", dirO, base);
+    /* ===================================================== */
+    /* Diretório de saída                                    */
+    /* ===================================================== */
+    outputPath = malloc(strlen(outputArg) + 1);
+    normalizePath(outputArg, outputPath, strlen(outputArg) + 1);
 
-    writer_writeSVG(svg_geo, pic);
-    writer_writeSVG(svg_qry, pic);
-    writer_writeTXT(txt_qry, ""); /* Conteúdo real será gerado pelo QRY */
+    /* ===================================================== */
+    /* Arquivo .geo                                          */
+    /* ===================================================== */
+    geoFileName = malloc(strlen(geoArg) + 1);
+    geoFilePath = malloc(strlen(geoArg) + 1);
 
-    /* ----------------------------------------------------------
-       6. Liberação e encerramento
-       ---------------------------------------------------------- */
-    bb_destroy(bb, (void (*)(SInfo)) entity_destroy);
-    picture_destroy(pic);
-    dg_destroy(g, NULL, NULL);
-    ht_destroy(quadras);
-    liberarParametros(&params);
+    getFileName(geoArg, geoFileName, strlen(geoArg) + 1);
+    getPath(geoArg, geoFilePath, strlen(geoArg) + 1);
 
+    geoFile = malloc(strlen(entryPath) + strlen(geoFilePath) +
+                     strlen(geoFileName) + 3);
+
+    sprintf(geoFile, "%s/%s%s%s",
+            entryPath,
+            geoFilePath,
+            strlen(geoFilePath) ? "/" : "",
+            geoFileName);
+
+    /* ===================================================== */
+    /* Arquivo .qry                                          */
+    /* ===================================================== */
+    if (qryArg) {
+        qryFileName = malloc(strlen(qryArg) + 1);
+        qryFilePath = malloc(strlen(qryArg) + 1);
+
+        getFileName(qryArg, qryFileName, strlen(qryArg) + 1);
+        getPath(qryArg, qryFilePath, strlen(qryArg) + 1);
+
+        qryFile = malloc(strlen(entryPath) + strlen(qryFilePath) +
+                         strlen(qryFileName) + 3);
+
+        sprintf(qryFile, "%s/%s%s%s",
+                entryPath,
+                qryFilePath,
+                strlen(qryFilePath) ? "/" : "",
+                qryFileName);
+    }
+
+    /* ===================================================== */
+    /* Inicialização da STreap                               */
+    /* ===================================================== */
+    factor /= 100.0;
+
+    STreap Elements = st_create(1e-6);
+    if (!Elements) {
+        fprintf(stderr, "Erro ao criar STreap\n");
+        return 1;
+    }
+
+    Style style = createTextStyle("arial", "normal", 16);
+
+    /* ===================================================== */
+    /* Leitura do .geo                                       */
+    /* ===================================================== */
+    if (ReadGeoFile(Elements, geoFile, style)) {
+        fprintf(stderr, "Erro ao ler arquivo .geo\n");
+        return 1;
+    }
+
+    /* ===================================================== */
+    /* SVG inicial                                           */
+    /* ===================================================== */
+    char geoNameNoExt[256];
+    getFileNameWithoutExt(geoFileName, geoNameNoExt, 256);
+
+    char svgGeo[512];
+    sprintf(svgGeo, "%s/%s.svg", outputPath, geoNameNoExt);
+
+    ArqSvg svg = abreEscritaSvg(svgGeo);
+    WriteSTreapEntsInSVG(svg, Elements, style);
+    fechaSvg(svg);
+
+    char dotGeo[512];
+    sprintf(dotGeo, "%s/%s.dot", outputPath, geoNameNoExt);
+    printSTrp(Elements, dotGeo);
+
+    /* ===================================================== */
+    /* Processamento do .qry                                 */
+    /* ===================================================== */
+    Lista Decos = createLst(-1);
+
+    if (qryFile) {
+        char qryNameNoExt[256];
+        getFileNameWithoutExt(qryFileName, qryNameNoExt, 256);
+
+        char svgFinal[512];
+        sprintf(svgFinal, "%s/%s-%s.svg",
+                outputPath, geoNameNoExt, qryNameNoExt);
+
+        if (ReadQryFile(Elements, qryFile, outputPath,
+                        geoNameNoExt, style, Decos)) {
+            fprintf(stderr, "Erro ao ler arquivo .qry\n");
+            return 1;
+        }
+
+        ArqSvg svgF = abreEscritaSvg(svgFinal);
+        WriteSTreapEntsInSVG(svgF, Elements, style);
+        if (!isEmptyLst(Decos))
+            WriteGeoListInSvg(svgF, Decos, style, 0, 0);
+        fechaSvg(svgF);
+
+        char dotFinal[512];
+        sprintf(dotFinal, "%s/%s-%s.dot",
+                outputPath, geoNameNoExt, qryNameNoExt);
+        printSTrp(Elements, dotFinal);
+    }
+
+    /* ===================================================== */
+    /* Liberação de memória                                  */
+    /* ===================================================== */
+    removeLista(Decos, NULL);
+    st_destroy(Elements, freeEntity);
+    free(style);
+
+    free(entryPath);
+    free(outputPath);
+    free(geoFile);
+    free(geoFileName);
+    free(geoFilePath);
+
+    if (qryFile) {
+        free(qryFile);
+        free(qryFileName);
+        free(qryFilePath);
+    }
+
+    printf("Executado com sucesso\n");
     return 0;
 }
