@@ -25,39 +25,79 @@
  *     - O usuário não tem acesso às estruturas internas.
  *
  * Importante:
- *     A remoção de uma quadra invalida seu ponteiro.
+ *     - A remoção de uma quadra invalida seu ponteiro.
  */
+
+/* ============================================================
+   Tipos opacos
+   ============================================================ */
 
 typedef void *Quadras;
 typedef void *Quadra;
 
+/* ============================================================
+   Criação e destruição
+   ============================================================ */
+
 /*
  * Função: processGeoFile
  * Descrição: Processa um arquivo .geo e cria a estrutura Quadras.
- * Parâmetros: path – caminho do arquivo .geo.
- * Retorno: Estrutura Quadras ou NULL em caso de erro.
+ * Parâmetros:
+ *     path – caminho do arquivo .geo.
+ * Retorno:
+ *     Estrutura Quadras ou NULL em caso de erro.
  */
 Quadras processGeoFile(const char *path);
 
 /*
- * Função: percorrerQuadras
- * Descrição: Percorre todas as quadras armazenadas.
- * Parâmetros: quadras – estrutura Quadras.
- *             f – função de visita.
- *             aux – dado auxiliar.
- * Retorno: Nenhum.
+ * Função: freeQuadras
+ * Descrição: Libera toda a estrutura Quadras.
+ * Parâmetros:
+ *     quadras – estrutura Quadras.
+ *     aux     – parâmetro auxiliar (não utilizado).
+ */
+void freeQuadras(Quadras quadras, void *aux);
+
+/* ============================================================
+   Percurso
+   ============================================================ */
+
+/*
+ * Tipo: FvisitaQuadra
+ * Descrição:
+ *     Função de visita utilizada no percurso das quadras.
+ *
+ * Parâmetros:
+ *     q   – quadra visitada.
+ *     x,y – coordenadas da quadra.
+ *     aux – dado auxiliar.
  */
 typedef void (*FvisitaQuadra)(Quadra q, double x, double y, void *aux);
+
+/*
+ * Função: percorrerQuadras
+ * Descrição: Percorre todas as quadras armazenadas.
+ * Parâmetros:
+ *     quadras – estrutura Quadras.
+ *     f       – função de visita.
+ *     aux     – dado auxiliar.
+ */
 void percorrerQuadras(Quadras quadras, FvisitaQuadra f, void *aux);
+
+/* ============================================================
+   Busca espacial
+   ============================================================ */
 
 /*
  * Função: getQuadrasRegion
- * Descrição: Obtém quadras dentro da região (x,y,w,h).
- * Parâmetros: quadras – estrutura Quadras.
- *             x,y – coordenada inferior esquerda.
- *             w,h – largura e altura.
- *             resultado – lista onde as quadras serão inseridas.
- * Retorno: Nenhum.
+ * Descrição:
+ *     Obtém quadras dentro da região retangular (x,y,w,h).
+ *
+ * Parâmetros:
+ *     quadras   – estrutura Quadras.
+ *     x,y       – coordenada inferior esquerda.
+ *     w,h       – largura e altura.
+ *     resultado – lista onde as quadras serão inseridas.
  */
 void getQuadrasRegion(
     Quadras quadras,
@@ -66,16 +106,24 @@ void getQuadrasRegion(
     Lista resultado
 );
 
+/* ============================================================
+   Acesso por identificador
+   ============================================================ */
+
 /*
  * Função: getQuadraByID
  * Descrição: Busca uma quadra pelo identificador.
- * Parâmetros: quadras – estrutura Quadras.
- *             id – identificador da quadra.
- * Retorno: Quadra ou NULL se não encontrada.
+ * Parâmetros:
+ *     quadras – estrutura Quadras.
+ *     id      – identificador da quadra.
+ * Retorno:
+ *     Quadra ou NULL se não encontrada.
  */
 Quadra getQuadraByID(Quadras quadras, const char *id);
 
-/* ===== GETTERS ===== */
+/* ============================================================
+   Getters
+   ============================================================ */
 
 /*
  * Função: getQuadraID
@@ -131,7 +179,9 @@ const char *getQuadraSW(Quadra q);
  */
 double getQuadraOpacidade(Quadra q);
 
-/* ===== SETTERS ===== */
+/* ============================================================
+   Setters
+   ============================================================ */
 
 /*
  * Função: setQuadraCFill
@@ -147,27 +197,36 @@ void setQuadraCStrk(Quadra q, const char *cstrk);
 
 /*
  * Função: setQuadraOpacidade
- * Descrição: Atualiza a opacidade.
+ * Descrição: Atualiza a opacidade da quadra.
  */
 void setQuadraOpacidade(Quadra q, double opacidade);
+
+/* ============================================================
+   Remoção
+   ============================================================ */
 
 /*
  * Função: removerQuadra
  * Descrição: Remove uma quadra da estrutura.
+ * Observação:
+ *     O ponteiro da quadra torna-se inválido após a remoção.
  */
 void removerQuadra(Quadras quadras, Quadra q);
 
+/* ============================================================
+   Acesso interno (uso controlado)
+   ============================================================ */
+
 /*
  * Função: getQuadrasSTrp
- * Descrição: Retorna a STreap interna.
- * Retorno: STreap.
+ * Descrição:
+ *     Retorna a STreap interna utilizada para indexação espacial.
+ *
+ * Atenção:
+ *     Esta função deve ser usada apenas por módulos de infraestrutura
+ *     (ex: SVG, depuração, testes).
  */
 STreap getQuadrasSTrp(Quadras quadras);
 
-/*
- * Função: freeQuadras
- * Descrição: Libera toda a estrutura Quadras.
- */
-void freeQuadras(Quadras quadras, void *aux);
+#endif /* QUADRAS_H */
 
-#endif
