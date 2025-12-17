@@ -55,5 +55,5 @@ void processQryFile(
     FILE* txt
 );
 
-#endif /* _QRY_H_ */
+#endif  _QRY_H_ 
 
