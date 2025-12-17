@@ -1,5 +1,5 @@
-#ifndef _VIA_H_
-#define _VIA_H_
+#ifndef VIA_H
+#define VIA_H
 
 #include <stdbool.h>
 #include "graph.h"
@@ -7,114 +7,97 @@
 /**
  * Módulo: Via
  *
- * Finalidade:
- *     Responsável pela leitura e manipulação de arquivos do tipo .via,
- *     que descrevem um sistema viário representado por um grafo direcionado.
+ * Objetivo:
+ *   Implementar o TAD Via, responsável por representar e manipular
+ *   um sistema viário modelado como um grafo direcionado.
  *
- *     Cada vértice representa um ponto do mapa (coordenadas x, y) e
- *     cada aresta representa uma via, contendo informações como nome,
- *     CEPs laterais, comprimento, velocidade média e estado de habilitação.
+ *   Os vértices representam pontos geográficos (x, y) e as arestas
+ *   representam vias urbanas, contendo atributos como nome,
+ *   CEPs laterais, comprimento, velocidade média e estado
+ *   de habilitação.
  *
- *     Este módulo encapsula os dados internos de vértices e arestas,
- *     expondo apenas funções de acesso e modificação controladas.
- *
- *     O grafo retornado é compatível com o TAD Graph do projeto.
+ *   O módulo encapsula completamente as estruturas internas,
+ *   expondo apenas funções de criação, acesso, modificação
+ *   e liberação de memória.
  */
 
 /* ============================================================
    Tipos opacos
    ============================================================ */
 
-/* Estrutura de vértice do sistema viário */
+/* Vértice do sistema viário */
 typedef void* VerticeVia;
 
-/* Estrutura de aresta do sistema viário */
+/* Aresta do sistema viário */
 typedef void* ArestaVia;
 
 /* ============================================================
-   Leitura de arquivo
+   Construção do grafo viário
    ============================================================ */
 
 /**
- * Processa um arquivo .via e constrói um grafo direcionado.
+ * Lê um arquivo .via e constrói o grafo correspondente.
  *
  * Parâmetros:
- *   path : caminho completo para o arquivo .via
+ *   path - caminho para o arquivo .via
  *
  * Retorno:
- *   Grafo contendo os vértices e arestas descritos no arquivo,
+ *   Grafo direcionado contendo vértices e vias,
  *   ou NULL em caso de erro.
  */
-Graph processViaFile(const char* path);
+Graph viaReadFile(const char* path);
 
 /* ============================================================
-   Operações sobre arestas (vias)
+   Operações sobre vias (arestas)
    ============================================================ */
 
-/*
- * Desabilita uma via (aresta).
- */
-void blockVia(ArestaVia av);
+/* Desativa uma via */
+void viaDisable(ArestaVia via);
 
-/*
- * Habilita uma via previamente bloqueada.
- */
-void unblockVia(ArestaVia av);
+/* Reativa uma via */
+void viaEnable(ArestaVia via);
 
-/*
- * Atualiza a velocidade média de uma via.
- */
-void setArestaVM(ArestaVia av, double vm);
+/* Atualiza a velocidade média da via */
+void viaSetSpeed(ArestaVia via, double speed);
 
 /* ============================================================
-   Funções de acesso — vértices
+   Acesso aos dados dos vértices
    ============================================================ */
 
-/*
- * Retorna a coordenada X do vértice.
- */
-double getVerticeViaX(VerticeVia vv);
+/* Retorna a coordenada X */
+double viaGetX(VerticeVia v);
 
-/*
- * Retorna a coordenada Y do vértice.
- */
-double getVerticeViaY(VerticeVia vv);
+/* Retorna a coordenada Y */
+double viaGetY(VerticeVia v);
 
 /* ============================================================
-   Funções de acesso — arestas
+   Acesso aos dados das vias
    ============================================================ */
 
-/*
- * Retorna o nome da via.
- */
-const char* getArestaViaNome(ArestaVia av);
+/* Retorna o nome da via */
+const char* viaGetName(ArestaVia via);
 
-/*
- * Retorna a velocidade média da via.
- */
-double getArestaVM(ArestaVia av);
+/* Retorna o comprimento da via */
+double viaGetLength(ArestaVia via);
 
-/*
- * Retorna o comprimento da via.
- */
-double getArestaCMP(ArestaVia av);
+/* Retorna a velocidade média */
+double viaGetSpeed(ArestaVia via);
 
-/*
- * Indica se a via está habilitada.
- */
-bool isArestaEnabled(ArestaVia av);
+/* Indica se a via está habilitada */
+bool viaIsEnabled(ArestaVia via);
 
 /* ============================================================
    Liberação de memória
    ============================================================ */
 
-/*
- * Libera a memória associada a uma aresta do sistema viário.
+/**
+ * Libera a memória associada a uma via.
  *
  * Parâmetros:
- *   av    : aresta
- *   extra : ponteiro auxiliar (não utilizado)
+ *   via   - aresta
+ *   extra - parâmetro auxiliar (não utilizado)
  */
-void freeArestaVia(ArestaVia av, void* extra);
+void viaFreeEdge(ArestaVia via, void* extra);
 
-#endif
+#endif /* VIA_H */
+
