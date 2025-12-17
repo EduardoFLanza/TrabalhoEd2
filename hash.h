@@ -1,104 +1,97 @@
-#ifndef _HASH_H_
-#define _HASH_H_
+#ifndef HASH_H
+#define HASH_H
 
 #include <stdbool.h>
 
 /**
  * Módulo: Hash
- * Finalidade:
- *     Implementa o TAD Hash, responsável por armazenar e recuperar pares
- *     (chave, valor) de forma eficiente, utilizando espalhamento (hashing)
- *     com tratamento de colisões por encadeamento separado.
  *
- *     As chaves são cadeias de caracteres (char*) e os valores são genéricos
- *     (void*), permitindo que este módulo seja reutilizado por diferentes
- *     estruturas do sistema, como quadras, vias, entidades, etc.
+ * Descrição:
+ *   Implementa uma tabela hash com encadeamento externo,
+ *   utilizando chaves do tipo string (char*).
  *
- *     O módulo controla automaticamente o fator de carga da tabela, realizando
- *     redimensionamento (rehash) quando necessário, de modo a manter o desempenho
- *     das operações de inserção, busca e remoção.
+ *   A estrutura é genérica: os valores armazenados são
+ *   ponteiros void*, permitindo reutilização do módulo
+ *   em diferentes contextos.
  *
- *     Este módulo faz parte de um trabalho da disciplina de Estrutura de Dados
- *     do curso de Ciência da Computação.
+ *   A tabela realiza redimensionamento automático
+ *   quando o fator máximo de preenchimento é atingido.
  */
 
-/* ============================
-   Tipos opacos
-   ============================ */
-
+/* Tipos opacos */
 typedef void* Hash;
+typedef void* HashItem;
 
-/* ============================
-   Funções auxiliares genéricas
-   ============================ */
+/* Funções auxiliares */
+typedef void (*freeFunc)(void* item, void* extra);
+typedef char* (*printFunc)(void* item, void* extra);
 
-/*
- * Função usada para liberação de memória associada aos valores armazenados.
- */
-typedef void (*freeFunc)(void*);
-
-/* ============================
-   Criação e destruição
-   ============================ */
-
-/*
- * Cria uma tabela hash.
+/**
+ * Cria uma nova tabela hash.
  *
  * Parâmetros:
- *   initialSize : tamanho inicial da tabela
- *   loadFactor  : fator máximo de ocupação (0 < loadFactor <= 1)
+ *   initialSize  - tamanho inicial da tabela
+ *   usePrime     - indica se o tamanho deve ser ajustado para primo
+ *   maxLoad      - fator máximo de preenchimento (0 < maxLoad <= 1)
  *
  * Retorno:
- *   Estrutura Hash criada ou NULL em caso de erro.
+ *   Ponteiro para a tabela hash criada, ou NULL em caso de erro.
  */
-Hash hashCreate(int initialSize, double loadFactor);
+Hash createHash(int initialSize, bool usePrime, double maxLoad);
 
-/*
- * Libera completamente a tabela hash.
- *
- * Parâmetros:
- *   hash     : tabela hash
- *   freeFunc : função opcional para liberar os valores armazenados
- */
-void hashDestroy(Hash hash, freeFunc freeFunc);
-
-/* ============================
-   Operações básicas
-   ============================ */
-
-/*
+/**
  * Insere ou atualiza um par (chave, valor) na tabela hash.
  *
  * Parâmetros:
- *   hash  : tabela hash
- *   key   : chave de acesso
- *   value : valor associado
+ *   hash   - tabela hash
+ *   key    - chave associada ao valor
+ *   value  - valor a ser armazenado
  */
-void hashInsert(Hash hash, const char *key, void *value);
+void insertHash(Hash hash, const char* key, HashItem value);
 
-/*
- * Recupera o valor associado a uma chave.
+/**
+ * Obtém o valor associado a uma chave.
  *
  * Parâmetros:
- *   hash : tabela hash
- *   key  : chave de acesso
+ *   hash - tabela hash
+ *   key  - chave a ser buscada
  *
  * Retorno:
- *   Valor associado à chave ou NULL caso não exista.
+ *   Valor associado à chave ou NULL se não encontrado.
  */
-void* hashGet(Hash hash, const char *key);
+HashItem getHashValue(Hash hash, const char* key);
 
-/*
- * Remove um par (chave, valor) da tabela hash.
+/**
+ * Remove um elemento da tabela hash.
  *
  * Parâmetros:
- *   hash : tabela hash
- *   key  : chave a ser removida
+ *   hash - tabela hash
+ *   key  - chave a ser removida
  *
  * Retorno:
- *   Valor associado à chave removida ou NULL caso não exista.
+ *   Valor removido ou NULL se a chave não existir.
  */
-void* hashRemove(Hash hash, const char *key);
+HashItem removeHashValue(Hash hash, const char* key);
 
-#endif
+/**
+ * Destrói a tabela hash e libera toda a memória alocada.
+ *
+ * Parâmetros:
+ *   hash      - tabela hash
+ *   freeValue - função para liberar os valores armazenados
+ *   extra     - parâmetro auxiliar repassado para freeValue
+ */
+void destroyHash(Hash hash, freeFunc freeValue, void* extra);
+
+/**
+ * Imprime o conteúdo da tabela hash (uso para depuração).
+ *
+ * Parâmetros:
+ *   hash       - tabela hash
+ *   printValue - função para converter o valor em string
+ */
+void printHash(Hash hash, printFunc printValue);
+
+#endif /* HASH_H */
+
 
