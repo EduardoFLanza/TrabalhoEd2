@@ -6,11 +6,10 @@
 #include "qry.h"
 #include "graph.h"
 #include "via.h"
-#include "quadra.h"
+#include "quadras.h"
 #include "svg.h"
 #include "path.h"
 #include "lista.h"
-#include "stree.h"
 
 /* =========================================================
    Estruturas auxiliares
@@ -42,24 +41,26 @@ static double custoPorTempo(Info info) {
    ========================================================= */
 
 static void cmdCatac(FILE* txt, Svg svg,
-                      STree quadras,
-                      Graph g,
-                      double x, double y, double w, double h) {
+                     Quadras quadras,
+                     Graph g,
+                     double x, double y, double w, double h) {
 
     fprintf(txt,
         "CATAC x=%lf y=%lf w=%lf h=%lf\n", x, y, w, h);
 
+    /* Quadras atingidas */
     Lista removidas = createLista();
-    streeSearchRect(quadras, x, y, w, h, removidas);
+    getQuadrasRegion(quadras, x, y, w, h, removidas);
 
-    void* q;
+    Quadra q;
     while ((q = popLista(removidas)) != NULL) {
         drawQuadra(svg, q, "red", "none");
-        fprintf(txt, "Quadra removida: %s\n", getQuadraCep(q));
-        streeRemove(quadras, getQuadraX(q), getQuadraY(q));
+        fprintf(txt, "Quadra removida: %s\n", getQuadraID(q));
+        removerQuadra(quadras, q);
     }
     freeLista(removidas);
 
+    /* Vias atingidas */
     Lista arestas = createLista();
     getEdges(g, arestas);
 
@@ -74,13 +75,15 @@ static void cmdCatac(FILE* txt, Svg svg,
         VerticeVia vu = getNodeInfo(g, u);
         VerticeVia vv = getNodeInfo(g, v);
 
-        double mx = (getVerticeViaX(vu) + getVerticeViaX(vv)) / 2;
-        double my = (getVerticeViaY(vu) + getVerticeViaY(vv)) / 2;
+        double mx = (viaGetX(vu) + viaGetX(vv)) / 2;
+        double my = (viaGetY(vu) + viaGetY(vv)) / 2;
 
-        if (mx >= x && mx <= x + w && my >= y && my <= y + h) {
-            blockVia(av);
+        if (mx >= x && mx <= x + w &&
+            my >= y && my <= y + h) {
+
+            viaDisable(av);
             fprintf(txt, "Via desabilitada: %s\n",
-                    getArestaViaNome(av));
+                    viaGetName(av));
         }
     }
     freeLista(arestas);
@@ -109,13 +112,15 @@ static void cmdBl(FILE* txt, Graph g,
         VerticeVia vu = getNodeInfo(g, u);
         VerticeVia vv = getNodeInfo(g, v);
 
-        double mx = (getVerticeViaX(vu) + getVerticeViaX(vv)) / 2;
-        double my = (getVerticeViaY(vu) + getVerticeViaY(vv)) / 2;
+        double mx = (viaGetX(vu) + viaGetX(vv)) / 2;
+        double my = (viaGetY(vu) + viaGetY(vv)) / 2;
 
-        if (mx >= x && mx <= x + w && my >= y && my <= y + h) {
-            blockVia(av);
+        if (mx >= x && mx <= x + w &&
+            my >= y && my <= y + h) {
+
+            viaDisable(av);
             fprintf(txt, "Via bloqueada: %s\n",
-                    getArestaViaNome(av));
+                    viaGetName(av));
         }
     }
     freeLista(arestas);
@@ -133,8 +138,8 @@ static void cmdRebl(FILE* txt, Graph g, const char* nome) {
         ArestaVia av = getEdgeInfo(g, e);
         if (!av) continue;
 
-        if (strcmp(getArestaViaNome(av), nome) == 0) {
-            unblockVia(av);
+        if (strcmp(viaGetName(av), nome) == 0) {
+            viaEnable(av);
             fprintf(txt, "Via reabilitada: %s\n", nome);
         }
     }
@@ -160,7 +165,7 @@ static void cmdDestino(FILE* txt, Graph g,
 }
 
 /* =========================================================
-   P? — CAMINHO COM ANIMAÇÃO
+   p? — caminho
    ========================================================= */
 
 static void cmdPath(FILE* txt, Svg svg, Graph g,
@@ -196,17 +201,14 @@ static void cmdPath(FILE* txt, Svg svg, Graph g,
 
 void processQryFile(const char* path,
                     Graph g,
-                    STree quadras,
+                    Quadras quadras,
                     Svg svg,
                     FILE* txt) {
 
     FILE* f = fopen(path, "r");
     if (!f) return;
 
-    RotaAtual rota;
-    rota.origem = -1;
-    rota.destino = -1;
-
+    RotaAtual rota = { -1, -1 };
     char cmd[32];
 
     while (fscanf(f, "%s", cmd) != EOF) {
