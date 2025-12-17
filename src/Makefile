@@ -4,22 +4,17 @@ LIBS= -lm
 
 OBJETOS= \
 	main.o \
-	args.o \
 	lista.o \
-	listadj.o \
+	fila.o \
+	quadras.o \
+	via.o \
+	qry.o \
+	drawSvg.o \
+	dotFile.o \
+	path.o \
+	STreap.o \
 	digraph.o \
-	boundingbox.o \
-	enderecos.o \
-	entity.o \
-	funcoesqry.o \
-	viaFile.o \
-	picture.o \
-	retangulo.o \
-	circulo.o \
-	linha.o \
-	hash_table.o \
-	tratar_strings.o \
-	STreap.o
+	geoFile.o
 
 # Compilador
 CC=gcc
@@ -36,37 +31,27 @@ $(PROJ_NAME): $(OBJETOS)
 
 # DEPENDÊNCIAS
 
-main.o: main.c args.h picture.h viaFile.h funcoesqry.h
-
-args.o: args.c args.h
+main.o: main.c quadras.h via.h qry.h dotFile.h drawSvg.h lista.h path.h
 
 lista.o: lista.c lista.h
 
-listadj.o: listadj.c listadj.h lista.h
+fila.o: fila.c fila.h lista.h
 
-digraph.o: digraph.c digraph.h listadj.h lista.h
+quadras.o: quadras.c quadras.h STreap.h
 
-boundingbox.o: boundingbox.c boundingbox.h STreap.h
+via.o: via.c via.h
 
-enderecos.o: enderecos.c enderecos.h retangulo.h
+qry.o: qry.c qry.h quadras.h via.h STreap.h drawSvg.h
 
-entity.o: entity.c entity.h circulo.h linha.h retangulo.h texto.h
+drawSvg.o: drawSvg.c drawSvg.h
 
-funcoesqry.o: funcoesqry.c funcoesqry.h picture.h boundingbox.h lista.h digraph.h listadj.h entidade.h circulo.h linha.h tratar_strings.h
+dotFile.o: dotFile.c dotFile.h STreap.h
 
-viaFile.o: viaFile.c viaFile.h picture.h digraph.h boundingbox.h hash_table.h
-
-picture.o: picture.c picture.h entity.h lista.h
-
-retangulo.o: retangulo.c retangulo.h
-
-circulo.o: circulo.c circulo.h
-
-linha.o: linha.c linha.h
-
-hash_table.o: hash_table.c hash_table.h
-
-tratar_strings.o: tratar_strings.c tratar_strings.h
+path.o: path.c path.h digraph.h lista.h
 
 STreap.o: STreap.c STreap.h
+
+digraph.o: digraph.c digraph.h lista.h
+
+geoFile.o: geoFile.c geoFile.h quadras.h
 
