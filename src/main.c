@@ -1,220 +1,124 @@
 #include "quadras.h"
 #include "via.h"
-#include "qryFile.h"
+#include "qry.h"
 #include "dotFile.h"
-#include "path.h"
-#include "drawSvg.h"
+#include "svg.h"
 #include "lista.h"
+#include "path.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /*
- * Função principal do programa
+ * Função principal
  */
 int main(int argc, char *argv[])
 {
-    int i;
-
-    /* Argumentos da linha de comando */
-    char *entryArg  = NULL;  /* -e */
+    char *entryArg = NULL;   /* -e */
     char *outputArg = NULL;  /* -o */
-    char *geoArg    = NULL;  /* -f */
-    char *qryArg    = NULL;  /* -q */
-    char *viaArg    = NULL;  /* -v */
+    char *geoArg = NULL;     /* -f */
+    char *qryArg = NULL;     /* -q */
+    char *viaArg = NULL;     /* -v */
 
-    /* Caminhos base */
-    char *entryPath  = NULL;
-    char *outputPath = NULL;
-
-    /* Arquivo .geo */
-    char *geoFilePath = NULL;
-    char *geoFileName = NULL;
-    char *geoFile     = NULL;
-
-    /* Arquivo .qry */
-    char *qryFilePath = NULL;
-    char *qryFileName = NULL;
-    char *qryFile     = NULL;
-
-    /* Arquivo .via */
-    char *viaFilePath = NULL;
-    char *viaFileName = NULL;
-    char *viaFile     = NULL;
-
-    /* Leitura dos argumentos */
-    for (i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "-e")) {
-            entryArg = argv[++i];
-        } else if (!strcmp(argv[i], "-o")) {
-            outputArg = argv[++i];
-        } else if (!strcmp(argv[i], "-f")) {
-            geoArg = argv[++i];
-        } else if (!strcmp(argv[i], "-q")) {
-            qryArg = argv[++i];
-        } else if (!strcmp(argv[i], "-v")) {
-            viaArg = argv[++i];
-        }
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "-e")) entryArg = argv[++i];
+        else if (!strcmp(argv[i], "-o")) outputArg = argv[++i];
+        else if (!strcmp(argv[i], "-f")) geoArg = argv[++i];
+        else if (!strcmp(argv[i], "-q")) qryArg = argv[++i];
+        else if (!strcmp(argv[i], "-v")) viaArg = argv[++i];
     }
 
     if (!outputArg || !geoArg) {
-        fprintf(stderr, "Erro: parâmetros obrigatórios ausentes\n");
+        fprintf(stderr, "Parâmetros obrigatórios ausentes\n");
         return 1;
     }
 
-    /* Diretório de entrada */
-    if (entryArg) {
-        entryPath = malloc(strlen(entryArg) + 1);
-        normalizePath(entryArg, entryPath, strlen(entryArg) + 1);
-    } else {
-        entryPath = malloc(2);
-        strcpy(entryPath, ".");
-    }
+    char entryPath[512] = ".";
+    if (entryArg)
+        normalizePath(entryArg, entryPath, sizeof(entryPath));
 
-    /* Diretório de saída */
-    outputPath = malloc(strlen(outputArg) + 1);
-    normalizePath(outputArg, outputPath, strlen(outputArg) + 1);
+    char outputPath[512];
+    normalizePath(outputArg, outputPath, sizeof(outputPath));
 
-    /* ===== Processamento do .geo ===== */
+    /* ===== GEO ===== */
 
-    geoFileName = malloc(strlen(geoArg) + 1);
-    geoFilePath = malloc(strlen(geoArg) + 1);
-
-    getFileName(geoArg, geoFileName, strlen(geoArg) + 1);
-    getPath(geoArg, geoFilePath, strlen(geoArg) + 1);
-
-    geoFile = malloc(strlen(entryPath) + strlen(geoFilePath) +
-                     strlen(geoFileName) + 3);
-
-    sprintf(geoFile, "%s/%s%s%s",
-            entryPath,
-            geoFilePath,
-            strlen(geoFilePath) ? "/" : "",
-            geoFileName);
+    char geoFile[512];
+    sprintf(geoFile, "%s/%s", entryPath, geoArg);
 
     Quadras quadras = processGeoFile(geoFile);
     if (!quadras) {
-        fprintf(stderr, "Erro ao processar arquivo .geo\n");
+        fprintf(stderr, "Erro ao ler .geo\n");
         return 1;
     }
 
-    /* ===== Processamento do .via (opcional) ===== */
+    /* ===== VIA ===== */
 
     Graph vias = NULL;
-
     if (viaArg) {
-        viaFileName = malloc(strlen(viaArg) + 1);
-        viaFilePath = malloc(strlen(viaArg) + 1);
+        char viaFile[512];
+        sprintf(viaFile, "%s/%s", entryPath, viaArg);
 
-        getFileName(viaArg, viaFileName, strlen(viaArg) + 1);
-        getPath(viaArg, viaFilePath, strlen(viaArg) + 1);
-
-        viaFile = malloc(strlen(entryPath) + strlen(viaFilePath) +
-                         strlen(viaFileName) + 3);
-
-        sprintf(viaFile, "%s/%s%s%s",
-                entryPath,
-                viaFilePath,
-                strlen(viaFilePath) ? "/" : "",
-                viaFileName);
-
-        vias = processViaFile(viaFile);
+        vias = viaReadFile(viaFile);
         if (!vias) {
-            fprintf(stderr, "Erro ao processar arquivo .via\n");
+            fprintf(stderr, "Erro ao ler .via\n");
             return 1;
         }
     }
 
-    /* ===== SVG inicial ===== */
+    /* ===== SVG INICIAL ===== */
 
-    char geoNameNoExt[256];
-    getFileNameWithoutExt(geoFileName, geoNameNoExt, 256);
+    char geoName[256];
+    getFileNameWithoutExt(geoArg, geoName, sizeof(geoName));
 
     char svgGeo[512];
-    sprintf(svgGeo, "%s/%s.svg", outputPath, geoNameNoExt);
+    sprintf(svgGeo, "%s/%s.svg", outputPath, geoName);
 
-    ArqSvg svg = abreEscritaSvg(svgGeo);
-    WriteQuadrasInSVG(svg, quadras);
-    fechaSvg(svg);
+    Svg svg = svgOpen(svgGeo);
+    drawQuadras(svg, quadras);
+    svgClose(svg);
 
     char dotGeo[512];
-    sprintf(dotGeo, "%s/%s.dot", outputPath, geoNameNoExt);
+    sprintf(dotGeo, "%s/%s.dot", outputPath, geoName);
     printSTrp(getQuadrasSTrp(quadras), dotGeo);
 
-    /* ===== Processamento do .qry ===== */
+    /* ===== QRY ===== */
 
     if (qryArg) {
-        qryFileName = malloc(strlen(qryArg) + 1);
-        qryFilePath = malloc(strlen(qryArg) + 1);
+        char qryFile[512];
+        sprintf(qryFile, "%s/%s", entryPath, qryArg);
 
-        getFileName(qryArg, qryFileName, strlen(qryArg) + 1);
-        getPath(qryArg, qryFilePath, strlen(qryArg) + 1);
-
-        qryFile = malloc(strlen(entryPath) + strlen(qryFilePath) +
-                         strlen(qryFileName) + 3);
-
-        sprintf(qryFile, "%s/%s%s%s",
-                entryPath,
-                qryFilePath,
-                strlen(qryFilePath) ? "/" : "",
-                qryFileName);
-
-        Lista Decos = createLst(-1);
-
-        char qryNameNoExt[256];
-        getFileNameWithoutExt(qryFileName, qryNameNoExt, 256);
+        char qryName[256];
+        getFileNameWithoutExt(qryArg, qryName, sizeof(qryName));
 
         char svgFinal[512];
-        sprintf(svgFinal, "%s/%s-%s.svg",
-                outputPath, geoNameNoExt, qryNameNoExt);
+        sprintf(svgFinal, "%s/%s-%s.svg", outputPath, geoName, qryName);
 
-        if (ReadQryFile(quadras, vias, qryFile, Decos)) {
-            fprintf(stderr, "Erro ao processar arquivo .qry\n");
-            return 1;
-        }
+        char txtFinal[512];
+        sprintf(txtFinal, "%s/%s-%s.txt", outputPath, geoName, qryName);
 
-        ArqSvg svgF = abreEscritaSvg(svgFinal);
-        WriteQuadrasInSVG(svgF, quadras);
-        if (!isEmptyLst(Decos))
-            WriteGeoListInSvg(svgF, Decos, 0, 0);
-        fechaSvg(svgF);
+        FILE *txt = fopen(txtFinal, "w");
+        Svg svgF = svgOpen(svgFinal);
+
+        processQryFile(qryFile, vias, quadras, svgF, txt);
+
+        svgClose(svgF);
+        fclose(txt);
 
         char dotFinal[512];
-        sprintf(dotFinal, "%s/%s-%s.dot",
-                outputPath, geoNameNoExt, qryNameNoExt);
+        sprintf(dotFinal, "%s/%s-%s.dot", outputPath, geoName, qryName);
         printSTrp(getQuadrasSTrp(quadras), dotFinal);
-
-        removeLista(Decos, NULL);
     }
 
-    /* ===== Liberação de memória ===== */
+    /* ===== LIBERAÇÃO ===== */
 
     if (vias)
-        killDG(vias, NULL, freeArestaVia);
+        killDG(vias, NULL, viaFreeEdge);
 
     freeQuadras(quadras, NULL);
 
-    free(entryPath);
-    free(outputPath);
-    free(geoFile);
-    free(geoFileName);
-    free(geoFilePath);
-
-    if (qryFile) {
-        free(qryFile);
-        free(qryFileName);
-        free(qryFilePath);
-    }
-
-    if (viaFile) {
-        free(viaFile);
-        free(viaFileName);
-        free(viaFilePath);
-    }
-
-    printf("Executado com sucesso\n");
     return 0;
 }
+
 
 
