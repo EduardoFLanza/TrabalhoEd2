@@ -1,5 +1,4 @@
 #include "quadras.h"
-#include "fileManager.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +19,9 @@ typedef struct QuadraStr {
 
 /*
  * Estrutura principal do TAD Quadras.
+ *
+ * A STreap é responsável pela indexação espacial,
+ * enquanto a Hash permite acesso direto por identificador.
  */
 typedef struct QuadrasStr {
     int nQuadras;
@@ -54,8 +56,7 @@ Quadras processGeoFile(const char *path)
     FILE *f = fopen(path, "r");
     if (!f) return NULL;
 
-    QuadrasStr *qs = malloc(sizeof(QuadrasStr));
-    qs->nQuadras = 0;
+    QuadrasStr *qs = calloc(1, sizeof(QuadrasStr));
     qs->tabelaHash = criaHash(50, true, 0.75f);
     qs->streap = st_create(1e-7);
 
@@ -101,7 +102,7 @@ void percorrerQuadras(Quadras quadras, FvisitaQuadra f, void *aux)
 {
     if (!quadras || !f) return;
     percursoLargura(((QuadrasStr *) quadras)->streap,
-                     (FvisitaNo) f, aux);
+                    (FvisitaNo) f, aux);
 }
 
 /*
@@ -113,7 +114,7 @@ void getQuadrasRegion(
     double w, double h,
     Lista resultado)
 {
-    if (!quadras) return;
+    if (!quadras || !resultado) return;
     getNodeRegiaoSTrp(((QuadrasStr *) quadras)->streap,
                       x, y, w, h, resultado);
 }
@@ -123,6 +124,7 @@ void getQuadrasRegion(
  */
 Quadra getQuadraByID(Quadras quadras, const char *id)
 {
+    if (!quadras || !id) return NULL;
     return getHashValue(((QuadrasStr *) quadras)->tabelaHash, id);
 }
 
@@ -164,6 +166,8 @@ void setQuadraOpacidade(Quadra q, double opacidade)
  */
 void removerQuadra(Quadras quadras, Quadra q)
 {
+    if (!quadras || !q) return;
+
     QuadrasStr *qs = (QuadrasStr *) quadras;
     QuadraStr  *quadra = (QuadraStr *) q;
 
@@ -175,18 +179,16 @@ void removerQuadra(Quadras quadras, Quadra q)
 }
 
 /*
- * Retorna a STreap interna.
- */
-STreap getQuadrasSTrp(Quadras quadras)
-{
-    return ((QuadrasStr *) quadras)->streap;
-}
-
-/*
  * Libera todas as quadras.
+ *
+ * A STreap é responsável por liberar as quadras.
+ * A Hash apenas referencia os ponteiros, portanto
+ * não deve liberar os valores.
  */
 void freeQuadras(Quadras quadras, void *aux)
 {
+    if (!quadras) return;
+
     QuadrasStr *qs = (QuadrasStr *) quadras;
     st_destroy(qs->streap, freeQuadra);
     destroiHash(qs->tabelaHash, NULL, NULL);
