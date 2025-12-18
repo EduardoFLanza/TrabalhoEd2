@@ -63,3 +63,4 @@ void DrawSTreap(STreap t, char *fullfilename)
     fprintf(dot, "}\n");
     fclose(dot);
 }
+
