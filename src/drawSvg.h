@@ -82,3 +82,4 @@ void escreveTextoSvg(ArqSvg fsvg, double x, double y,
 void fechaSvg(ArqSvg fsvg);
 
 #endif
+
