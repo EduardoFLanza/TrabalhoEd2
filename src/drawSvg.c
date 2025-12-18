@@ -15,119 +15,54 @@ static double Normalizar(double value)
 /*
  * Função: abreEscritaSvg
  * Descrição: Cria um arquivo SVG para escrita.
- * Parâmetros: fn – nome ou caminho do arquivo.
+ * Parâmetros: fn – nome ou caminho do arquivo; w - largura; h - altura.
  * Retorno: ArqSvg ou NULL.
  */
-ArqSvg abreEscritaSvg(char *fn)
+ArqSvg abreEscritaSvg(char *fn, double w, double h)
 {
     FILE *file = fopen(fn, "w");
     if (file == NULL)
         return NULL;
 
-    fprintf(file, "<svg xmlns=\"http://www.w3.org/2000/svg\">\n");
+    fprintf(file, "<svg width=\"%lf\" height=\"%lf\" viewBox=\"0 0 %lf %lf\" xmlns=\"http://www.w3.org/2000/svg\">\n", 
+            w, h, w, h);
+            
     return (ArqSvg) file;
 }
-
-/*
- * Função: preparaDecoracao
- * Descrição: Monta string de atributos SVG para figuras.
- * Parâmetros: ver definição no .h.
- * Retorno: Nenhum.
- */
-void preparaDecoracao(ArqSvg fsvg, char *deco, int decoLen,
-                      char *corBorda, char *corPreenchimento,
-                      char *larguraBorda, double transparencia,
-                      double transparenciaPreenchimento,
-                      double transparenciaBorda)
-{
-    transparencia              = Normalizar(transparencia);
-    transparenciaPreenchimento = Normalizar(transparenciaPreenchimento);
-    transparenciaBorda         = Normalizar(transparenciaBorda);
-
-    snprintf(deco, decoLen,
-             "style=\"stroke:%s;fill:%s;stroke-width:%s;"
-             "opacity:%lf;fill-opacity:%lf;stroke-opacity:%lf\"",
-             corBorda, corPreenchimento, larguraBorda,
-             transparencia, transparenciaPreenchimento, transparenciaBorda);
-}
-
-/*
- * Função: escreveCirculoSvg
- * Descrição: Insere um círculo no SVG.
- */
-void escreveCirculoSvg(ArqSvg fsvg, double xc, double yc, double r, char *deco)
-{
-    if (fsvg == NULL)
-        return;
-
-    fprintf((FILE *) fsvg,
-            "\n\t<circle cx=\"%lf\" cy=\"%lf\" r=\"%lf\"",
-            xc, yc, r);
-
-    if (deco != NULL)
-        fprintf((FILE *) fsvg, " %s", deco);
-
-    fprintf((FILE *) fsvg, " />");
-}
-
 /*
  * Função: escreveRetanguloSvg
- * Descrição: Insere um retângulo no SVG.
+ * Descrição: Insere um retângulo no arquivo SVG com estilos.
  */
 void escreveRetanguloSvg(ArqSvg fsvg, double x, double y,
-                         double larg, double alt, char *deco)
+                         double larg, double alt, const char *corP,
+                         const char *corB, const char *espB,
+                         double opacidade)
 {
     if (fsvg == NULL)
         return;
 
     fprintf((FILE *) fsvg,
-            "\n\t<rect x=\"%lf\" y=\"%lf\" width=\"%lf\" height=\"%lf\"",
-            x, y, larg, alt);
-
-    if (deco != NULL)
-        fprintf((FILE *) fsvg, " %s", deco);
-
-    fprintf((FILE *) fsvg, " />");
+            "\n\t<rect x=\"%lf\" y=\"%lf\" width=\"%lf\" height=\"%lf\" "
+            "fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" fill-opacity=\"%.1f\" />",
+            x, y, larg, alt, corP, corB, espB, opacidade);
 }
 
 /*
  * Função: escreveLinhaSvg
- * Descrição: Insere uma linha no SVG.
+ * Descrição: Insere uma linha no arquivo SVG com estilos.
  */
 void escreveLinhaSvg(ArqSvg fsvg,
                      double x1, double y1,
                      double x2, double y2,
-                     char *deco)
+                     const char *cor, const char* espL)
 {
     if (fsvg == NULL)
         return;
 
     fprintf((FILE *) fsvg,
-            "\n\t<line x1=\"%lf\" y1=\"%lf\" x2=\"%lf\" y2=\"%lf\"",
-            x1, y1, x2, y2);
-
-    if (deco != NULL)
-        fprintf((FILE *) fsvg, " %s", deco);
-
-    fprintf((FILE *) fsvg, " />");
-}
-
-/*
- * Função: preparaDecoracaoTexto
- * Descrição: Monta string de atributos SVG para textos.
- */
-void preparaDecoracaoTexto(ArqSvg fsvg, char *deco, int decoLen,
-                           char *fontFamily, char *fontStyle,
-                           char *fontWeight, char *fontSize,
-                           char *fontColor, char *fontStroke,
-                           char *textAnchor)
-{
-    snprintf(deco, decoLen,
-             "style=\"font-family:%s;font-style:%s;"
-             "font-weight:%s;font-size:%s;"
-             "fill:%s;stroke:%s\"",
-             fontFamily, fontStyle, fontWeight,
-             fontSize, fontColor, fontStroke);
+            "\n\t<line x1=\"%lf\" y1=\"%lf\" x2=\"%lf\" y2=\"%lf\" "
+            "stroke=\"%s\" stroke-width=\"%s\" />",
+            x1, y1, x2, y2, cor, espL);
 }
 
 /*
@@ -135,7 +70,7 @@ void preparaDecoracaoTexto(ArqSvg fsvg, char *deco, int decoLen,
  * Descrição: Insere um texto no SVG.
  */
 void escreveTextoSvg(ArqSvg fsvg, double x, double y,
-                     char *txt, char *textAnchor, char *decoTxt)
+                     char *txt, char *textAnchor)
 {
     if (fsvg == NULL)
         return;
@@ -143,9 +78,6 @@ void escreveTextoSvg(ArqSvg fsvg, double x, double y,
     fprintf((FILE *) fsvg,
             "\n\t<text text-anchor=\"%s\" x=\"%lf\" y=\"%lf\"",
             textAnchor, x, y);
-
-    if (decoTxt != NULL)
-        fprintf((FILE *) fsvg, " %s", decoTxt);
 
     fprintf((FILE *) fsvg, ">%s</text>", txt);
 }
@@ -161,19 +93,4 @@ void fechaSvg(ArqSvg fsvg)
 
     fprintf((FILE *) fsvg, "\n</svg>");
     fclose((FILE *) fsvg);
-}
-
-/*
- * Função: applyRotation
- * Descrição: Aplica rotação à decoração SVG.
- */
-void applyRotation(char *deco, int decoLen,
-                   double theta, double xCenter, double yCenter)
-{
-    char buffer[decoLen];
-
-    snprintf(buffer, decoLen, "%s", deco);
-    snprintf(deco, decoLen,
-             "transform=\"rotate(%lf,%lf,%lf)\" %s",
-             theta, xCenter, yCenter, buffer);
 }
