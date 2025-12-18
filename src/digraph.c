@@ -22,19 +22,19 @@ typedef struct EdgeImpl {
 typedef struct NodeImpl {
     char* name;
     Info info;
-    Lista edgesOut;  // Lista de int (indice do vertice destino)
-    Lista edgesIn;   // Lista de int (indice do vertice origem)
+    Lista edgesOut;
+    Lista edgesIn;
 } NodeImpl;
 
 typedef struct GraphImpl {
     NodeImpl** nodes;
     int numNodes;
     int maxNodes;
-    Lista allEdges;  // Lista de EdgeImpl*
+    Lista allEdges;
 } GraphImpl;
 
 typedef struct CaminhoImpl {
-    Lista pathEdges; // Lista de EdgeImpl*
+    Lista pathEdges;
     double distance;
 } CaminhoImpl;
 
@@ -44,7 +44,8 @@ typedef struct CaminhoImpl {
 
 static NodeImpl* getNodeInternal(Graph g, Node node) {
     GraphImpl* gr = (GraphImpl*) g;
-    if(node < 0 || node >= gr->numNodes) return NULL;
+    if(!gr || node < 0 || node >= gr->numNodes)
+        return NULL;
     return gr->nodes[node];
 }
 
@@ -54,6 +55,9 @@ static EdgeImpl* getEdgeInternal(Edge e) {
 
 static Node findNodeIndex(Graph g, const char* name) {
     GraphImpl* gr = (GraphImpl*) g;
+    if(!gr || !name)
+        return -1;
+
     for(int i = 0; i < gr->numNodes; i++) {
         if(strcmp(gr->nodes[i]->name, name) == 0)
             return i;
@@ -108,6 +112,7 @@ void freeCaminho(Caminho caminho){
 Node addNode(Graph g, char* nome, Info info){
     GraphImpl* gr = (GraphImpl*) g;
 
+    if(!gr || !nome) return -1;
     if(gr->numNodes >= gr->maxNodes) return -1;
     if(findNodeIndex(g, nome) != -1) return -1;
 
@@ -122,6 +127,9 @@ Node addNode(Graph g, char* nome, Info info){
 }
 
 Node getNode(Graph g, char* nome){
+    if(!g || !nome)
+        return -1;
+
     return findNodeIndex(g, nome);
 }
 
@@ -147,6 +155,8 @@ int getTotalNodes(Graph g){
 int getMaxNodes(Graph g){
     return ((GraphImpl*)g)->maxNodes;
 }
+
+
 
 /* ============================================================
    Arestas
@@ -329,34 +339,44 @@ static bool dfs_visit(Graph g, Node u, bool* visited, int* disc, int* finish, in
 bool dfs(Graph g, Node node,
          procEdge treeEdge, procEdge forwardEdge,
          procEdge returnEdge, procEdge crossEdge,
-         dfsRestarted newTree, void *extra){
-
+         dfsRestarted newTree, void *extra)
+{
     GraphImpl* gr = (GraphImpl*) g;
+    int n = gr->numNodes;
 
-    bool visited[gr->numNodes];
-    int disc[gr->numNodes];
-    int finish[gr->numNodes];
+    bool* visited = malloc(sizeof(bool) * n);
+    int* disc     = malloc(sizeof(int) * n);
+    int* finish   = malloc(sizeof(int) * n);
     int time = 0;
 
-    for(int i = 0; i < gr->numNodes; i++)
+    for(int i = 0; i < n; i++)
         visited[i] = false;
 
     if(newTree)
         newTree(g, extra);
 
-    return dfs_visit(g, node, visited, disc, finish, &time,
-                     treeEdge, forwardEdge, returnEdge, crossEdge, extra);
+    bool result = dfs_visit(g, node, visited, disc, finish, &time,
+                            treeEdge, forwardEdge, returnEdge, crossEdge, extra);
+
+    free(visited);
+    free(disc);
+    free(finish);
+
+    return result;
 }
+
 
 /* ============================================================
    BFS
    ============================================================ */
 
-bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra){
+bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra)
+{
     GraphImpl* gr = (GraphImpl*) g;
+    int n = gr->numNodes;
 
-    bool visited[gr->numNodes];
-    for(int i = 0; i < gr->numNodes; i++)
+    bool* visited = malloc(sizeof(bool) * n);
+    for(int i = 0; i < n; i++)
         visited[i] = false;
 
     Lista queue = createLst(-1);
@@ -379,6 +399,7 @@ bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra){
 
                 if(discoverEdge && !discoverEdge(g,e,0,0,extra)){
                     killLst(queue,NULL);
+                    free(visited);
                     return false;
                 }
             }
@@ -386,8 +407,10 @@ bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra){
     }
 
     killLst(queue,NULL);
+    free(visited);
     return true;
 }
+
 
 /* ============================================================
    Dijkstra
