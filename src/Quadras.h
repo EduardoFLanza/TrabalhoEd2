@@ -12,11 +12,10 @@
  *     Implementa o TAD Quadras, responsável por armazenar, indexar e
  *     gerenciar quadras urbanas lidas do arquivo .geo.
  *
- *     As quadras são indexadas espacialmente por meio de uma STreap,
- *     utilizando a coordenada (x,y) como âncora espacial, e também
+ *     As quadras são guardadas em uma lista generica e também
  *     associadas por identificador (id) através de uma tabela hash.
  *
- *     Este módulo provê operações de criação, percurso, busca espacial,
+ *     Este módulo provê operações de criação, percurso da lista,
  *     acesso por identificador, atualização de atributos e liberação
  *     completa da estrutura.
  *
@@ -54,9 +53,8 @@ Quadras processGeoFile(const char *path);
  * Descrição: Libera toda a estrutura Quadras.
  * Parâmetros:
  *     quadras – estrutura Quadras.
- *     aux     – parâmetro auxiliar (não utilizado).
  */
-void freeQuadras(Quadras quadras, void *aux);
+void freeQuadras(Quadras quadras);
 
 /* ============================================================
    Percurso
@@ -83,28 +81,6 @@ typedef void (*FvisitaQuadra)(Quadra q, double x, double y, void *aux);
  *     aux     – dado auxiliar.
  */
 void percorrerQuadras(Quadras quadras, FvisitaQuadra f, void *aux);
-
-/* ============================================================
-   Busca espacial
-   ============================================================ */
-
-/*
- * Função: getQuadrasRegion
- * Descrição:
- *     Obtém quadras dentro da região retangular (x,y,w,h).
- *
- * Parâmetros:
- *     quadras   – estrutura Quadras.
- *     x,y       – coordenada inferior esquerda.
- *     w,h       – largura e altura.
- *     resultado – lista onde as quadras serão inseridas.
- */
-void getQuadrasRegion(
-    Quadras quadras,
-    double x, double y,
-    double w, double h,
-    Lista resultado
-);
 
 /* ============================================================
    Acesso por identificador
@@ -213,20 +189,4 @@ void setQuadraOpacidade(Quadra q, double opacidade);
  */
 void removerQuadra(Quadras quadras, Quadra q);
 
-/* ============================================================
-   Acesso interno (uso controlado)
-   ============================================================ */
-
-/*
- * Função: getQuadrasSTrp
- * Descrição:
- *     Retorna a STreap interna utilizada para indexação espacial.
- *
- * Atenção:
- *     Esta função deve ser usada apenas por módulos de infraestrutura
- *     (ex: SVG, depuração, testes).
- */
-STreap getQuadrasSTrp(Quadras quadras);
-
-#endif /* QUADRAS_H */
-
+#endif
