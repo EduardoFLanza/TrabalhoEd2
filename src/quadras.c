@@ -175,11 +175,19 @@ void removerQuadra(Quadras quadras, Quadra q)
     Iterador it = createIterador(qs->lista, false);
     while (!isIteratorEmpty(qs->lista, it)) {
         if (getIteratorItem(qs->lista, it) == quadra) {
-            removeLst(qs->lista, it); 
+            Posic p = getIteratorPosic(qs->lista, it);
+            
+            getIteratorNext(qs->lista, it); 
+            
+            removeLst(qs->lista, p); 
             break;
+        } else {
+            getIteratorNext(qs->lista, it);
         }
-        it = getIteratorNext(qs->lista, it);
     }
+    
+    killIterator(qs->lista, it);
+
     freeQuadra(quadra);
     qs->nQuadras--;
 }
@@ -201,4 +209,6 @@ void freeQuadras(Quadras quadras)
     destroyHash(qs->tabelaHash, NULL, NULL);
     free(qs);
 }
+
+
 
