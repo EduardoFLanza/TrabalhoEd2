@@ -145,10 +145,12 @@ void viaFreeVertex(VerticeVia v)
 
 void viaFreeEdge(ArestaVia via)
 {
+    if (!via) return;
     ViaEdge *e = (ViaEdge *)via;
 
-    free(e->name);
-    free(e->right);
-    free(e->left);
+    if (e->name)  { free(e->name);  e->name = NULL; }
+    if (e->right) { free(e->right); e->right = NULL; }
+    if (e->left)  { free(e->left);  e->left = NULL; }
+    
     free(e);
 }
