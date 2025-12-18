@@ -196,13 +196,15 @@ Posic getPreviousLst(Lista L, Posic p)
     return n->ant;
 }
 
-void killLst(Lista L)
+void killLst(Lista L, freeFuncLst f)
 {
     ListaImpl *lst = (ListaImpl *)L;
     Node *n = lst->prim;
 
     while (n) {
         Node *next = n->prox;
+        if (f)
+            f(n->info);
         free(n);
         n = next;
     }
@@ -304,3 +306,4 @@ Lista filterClausure(Lista L, CheckClausure f, Clausura c)
 
     return newL;
 }
+
