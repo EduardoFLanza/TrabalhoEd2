@@ -100,4 +100,3 @@ void killDG(Graph g, freeFuncDG freeVerticeFunc, freeFuncDG freeEdgeFunc);
 void freeCaminho(Caminho caminho);
 
 #endif
-
