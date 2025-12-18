@@ -84,17 +84,16 @@ void killDG(Graph g, freeFuncDG freeVerticeFunc, freeFuncDG freeEdgeFunc) {
 
     for(int i = 0; i < gr->numNodes; i++){
         NodeImpl* n = gr->nodes[i];
-        if(freeVerticeFunc)
-            freeVerticeFunc(n->info);
-
+        if(freeVerticeFunc && n->info) freeVerticeFunc(n->info);
+        
         killLst(n->edgesOut, NULL);
         killLst(n->edgesIn, NULL);
-
         free(n->name);
         free(n);
     }
 
     killLst(gr->allEdges, freeEdgeFunc);
+
     free(gr->nodes);
     free(gr);
 }
@@ -483,10 +482,6 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
     return caminho;
 }
 
-Lista getDijkstraList(Caminho caminho){
-    return ((CaminhoImpl*)caminho)->pathEdges;
-}
+Lista getDijkstraList(Caminho caminho){ return ((CaminhoImpl*)caminho)->pathEdges; }
 
-double getDijkstraDistance(Caminho caminho){
-    return ((CaminhoImpl*)caminho)->distance;
-}
+double getDijkstraDistance(Caminho caminho){ return ((CaminhoImpl*)caminho)->distance; }
