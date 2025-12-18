@@ -78,7 +78,12 @@ bool viaIsEnabled(ArestaVia via);
 /* Liberação de memória */
 
 /**
- * Libera a memória associada a uma via.
+ * Libera a memória associada a uma via (vértice).
+ * Parâmetros: via   - vértice */
+void viaFreeVertex(VerticeVia v);
+
+/**
+ * Libera a memória associada a uma via (aresta).
  * Parâmetros: via   - aresta */
 void viaFreeEdge(ArestaVia via);
 
