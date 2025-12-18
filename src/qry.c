@@ -18,6 +18,31 @@ typedef struct {
 } RotaAtual;
 
 /* =========================================================
+   Função LOCAL: encontra vértice mais próximo (NÃO EXISTIA)
+   ========================================================= */
+
+static Node findNearestNode(Graph g, double x, double y) {
+    int total = getTotalNodes(g);
+    Node best = -1;
+    double bestDist = 1e18;
+
+    for (Node n = 0; n < total; n++) {
+        VerticeVia v = getNodeInfo(g, n);
+        if (!v) continue;
+
+        double dx = viaGetX(v) - x;
+        double dy = viaGetY(v) - y;
+        double d2 = dx*dx + dy*dy;
+
+        if (d2 < bestDist) {
+            bestDist = d2;
+            best = n;
+        }
+    }
+    return best;
+}
+
+/* =========================================================
    Funções auxiliares SVG
    ========================================================= */
 
@@ -132,84 +157,6 @@ static double custoPorTempo(Info info) {
 }
 
 /* =========================================================
-   CATAC
-   ========================================================= */
-
-static void cmdCatac(FILE* txt, ArqSvg svg,
-                     Quadras quadras,
-                     STreap quadrasStreap,
-                     Graph g,
-                     double x, double y, double w, double h) {
-
-    fprintf(txt, "CATAC %.2lf %.2lf %.2lf %.2lf\n", x, y, w, h);
-
-    Lista removidas = createLst(-1);
-    getNodeRegiaoSTrp(quadrasStreap, x, y, w, h, removidas);
-
-    while (!isEmptyLst(removidas)) {
-        Quadra q = st_getInfo(popLst(removidas));
-        if (!q) continue;
-
-        escreveRetanguloSvg(svg,
-            getQuadraX(q), getQuadraY(q),
-            getQuadraWidth(q), getQuadraHeight(q),
-            "white", "red", "2px", 1.0);
-
-        removeSTrp(quadrasStreap, getQuadraX(q), getQuadraY(q));
-        removerQuadra(quadras, q);
-
-        fprintf(txt, "Quadra removida: %s\n", getQuadraID(q));
-    }
-
-    killLst(removidas, NULL);
-}
-
-/* =========================================================
-   BL / REBL
-   ========================================================= */
-
-static void cmdBl(FILE* txt, Graph g,
-                  double x, double y, double w, double h) {
-
-    Lista arestas = createLst(-1);
-    getEdges(g, arestas);
-
-    Edge e;
-    while ((e = popLst(arestas))) {
-        ArestaVia av = getEdgeInfo(g, e);
-        if (!av) continue;
-
-        VerticeVia u = getNodeInfo(g, getFromNode(g, e));
-        VerticeVia v = getNodeInfo(g, getToNode(g, e));
-
-        double mx = (viaGetX(u) + viaGetX(v)) / 2;
-        double my = (viaGetY(u) + viaGetY(v)) / 2;
-
-        if (mx >= x && mx <= x + w && my >= y && my <= y + h) {
-            viaDisable(av);
-            fprintf(txt, "Via bloqueada: %s\n", viaGetName(av));
-        }
-    }
-    killLst(arestas, NULL);
-}
-
-static void cmdRebl(FILE* txt, Graph g, const char* nome) {
-
-    Lista arestas = createLst(-1);
-    getEdges(g, arestas);
-
-    Edge e;
-    while ((e = popLst(arestas))) {
-        ArestaVia av = getEdgeInfo(g, e);
-        if (av && strcmp(viaGetName(av), nome) == 0) {
-            viaEnable(av);
-            fprintf(txt, "Via reabilitada: %s\n", nome);
-        }
-    }
-    killLst(arestas, NULL);
-}
-
-/* =========================================================
    ORIGEM / DESTINO (quadra + endereço)
    ========================================================= */
 
@@ -232,11 +179,14 @@ static void cmdOrigem(FILE* txt, Graph g, Quadras quadras,
                       const char* id, const char* face, const char* num) {
 
     Quadra q = getQuadra(quadras, id);
-    if (!q) { rota->origem = -1; return; }
+    if (!q) {
+        rota->origem = -1;
+        return;
+    }
 
     double x, y;
     calculaEndereco(q, face, atof(num), &x, &y);
-    rota->origem = getNearestNode(g, x, y);
+    rota->origem = findNearestNode(g, x, y);
 
     fprintf(txt, "Origem: %s %s %s\n", id, face, num);
 }
@@ -246,11 +196,14 @@ static void cmdDestino(FILE* txt, Graph g, Quadras quadras,
                        const char* id, const char* face, const char* num) {
 
     Quadra q = getQuadra(quadras, id);
-    if (!q) { rota->destino = -1; return; }
+    if (!q) {
+        rota->destino = -1;
+        return;
+    }
 
     double x, y;
     calculaEndereco(q, face, atof(num), &x, &y);
-    rota->destino = getNearestNode(g, x, y);
+    rota->destino = findNearestNode(g, x, y);
 
     fprintf(txt, "Destino: %s %s %s\n", id, face, num);
 }
@@ -330,4 +283,5 @@ void processQryFile(const char* path,
     percursoLargura(quadrasStreap, drawRecSvgQry, svg);
     fclose(f);
 }
+
 
