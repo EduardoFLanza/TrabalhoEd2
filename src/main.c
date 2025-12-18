@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     /* =========================================================================== */
     
     if (vias)
-        killDG(vias, NULL, viaFreeEdgeFunc);
+        killDG(vias, viaFreeVertex, viaFreeEdgeFunc);
     
     st_destroy(quadrasStreap, NULL);
     freeQuadras(quadras);
