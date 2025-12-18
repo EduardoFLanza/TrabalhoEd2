@@ -21,9 +21,7 @@
  *   e liberação de memória.
  */
 
-/* ============================================================
-   Tipos opacos
-   ============================================================ */
+/* Tipos opaco */
 
 /* Vértice do sistema viário */
 typedef void* VerticeVia;
@@ -31,25 +29,20 @@ typedef void* VerticeVia;
 /* Aresta do sistema viário */
 typedef void* ArestaVia;
 
-/* ============================================================
-   Construção do grafo viário
-   ============================================================ */
+/* Construção do grafo viário */
 
 /**
  * Lê um arquivo .via e constrói o grafo correspondente.
  *
  * Parâmetros:
  *   path - caminho para o arquivo .via
- *
  * Retorno:
  *   Grafo direcionado contendo vértices e vias,
  *   ou NULL em caso de erro.
  */
 Graph viaReadFile(const char* path);
 
-/* ============================================================
-   Operações sobre vias (arestas)
-   ============================================================ */
+/* Operações sobre vias (arestas) */
 
 /* Desativa uma via */
 void viaDisable(ArestaVia via);
