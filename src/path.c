@@ -221,3 +221,4 @@ void getFileNameWithoutExt(char *fullPath, char *fileName, int lenFileName)
     else
         strcpy(fileName, fullPath);
 }
+
