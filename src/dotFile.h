@@ -8,9 +8,7 @@
  *
  * Descrição:
  *     Este módulo provê funções para exportar uma STreap
- *     para um arquivo texto no formato DOT, compatível com
- *     a ferramenta Graphviz.
- *
+ *     para um arquivo texto no formato DOT.
  *     A árvore é percorrida e cada nó é representado por sua
  *     âncora (x,y) e arestas pai-filho.
  *
