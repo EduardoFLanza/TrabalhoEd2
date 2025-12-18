@@ -483,4 +483,10 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
     return caminho;
 }
 
+Lista getDijkstraList(Caminho caminho){
+    return ((CaminhoImpl*)caminho)->pathEdges;
+}
 
+double getDijkstraDistance(Caminho caminho){
+    return ((CaminhoImpl*)caminho)->distance;
+}
