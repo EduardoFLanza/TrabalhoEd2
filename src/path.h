@@ -121,3 +121,4 @@ void getExt(char *fullPath, char *ext, int lenExt);
 void getFileNameWithoutExt(char *fullPath, char *fileName, int lenFileName);
 
 #endif
+
