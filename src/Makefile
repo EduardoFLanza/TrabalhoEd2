@@ -12,7 +12,7 @@ OBJETOS= \
 	drawSvg.o \
 	dotFile.o \
 	path.o \
-	STreap.o \
+	streap.o \
 	digraph.o \
 	hash.o
 
@@ -39,7 +39,7 @@ lista.o: lista.c lista.h
 
 fila.o: fila.c fila.h lista.h
 
-quadras.o: quadras.c quadras.h STreap.h hash.h
+quadras.o: quadras.c quadras.h streap.h hash.h
 
 via.o: via.c via.h
 
