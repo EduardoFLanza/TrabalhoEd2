@@ -23,7 +23,7 @@ typedef void* Hash;
 typedef void* HashItem;
 
 /* Funções auxiliares */
-typedef void (*freeFunc)(void* item, void* extra);
+typedef void (*freeFuncHash)(void* item, void* extra);
 typedef char* (*printFunc)(void* item, void* extra);
 
 /**
@@ -31,13 +31,12 @@ typedef char* (*printFunc)(void* item, void* extra);
  *
  * Parâmetros:
  *   initialSize  - tamanho inicial da tabela
- *   usePrime     - indica se o tamanho deve ser ajustado para primo
  *   maxLoad      - fator máximo de preenchimento (0 < maxLoad <= 1)
  *
  * Retorno:
  *   Ponteiro para a tabela hash criada, ou NULL em caso de erro.
  */
-Hash createHash(int initialSize, bool usePrime, double maxLoad);
+Hash createHash(int initialSize, double maxLoad);
 
 /**
  * Insere ou atualiza um par (chave, valor) na tabela hash.
@@ -81,17 +80,11 @@ HashItem removeHashValue(Hash hash, const char* key);
  *   freeValue - função para liberar os valores armazenados
  *   extra     - parâmetro auxiliar repassado para freeValue
  */
-void destroyHash(Hash hash, freeFunc freeValue, void* extra);
+void destroyHash(Hash hash, freeFuncHash freeValue, void* extra);
 
-/**
- * Imprime o conteúdo da tabela hash (uso para depuração).
- *
- * Parâmetros:
- *   hash       - tabela hash
- *   printValue - função para converter o valor em string
- */
-void printHash(Hash hash, printFunc printValue);
+#endif
 
-#endif /* HASH_H */
+
+
 
 
