@@ -482,3 +482,5 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
 
     return caminho;
 }
+
+
