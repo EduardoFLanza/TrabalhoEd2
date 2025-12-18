@@ -14,7 +14,7 @@ OBJETOS= \
 	path.o \
 	STreap.o \
 	digraph.o \
-	geoFile.o
+	hash.o
 
 # Compilador
 CC=gcc
@@ -33,25 +33,24 @@ $(PROJ_NAME): $(OBJETOS)
 
 main.o: main.c quadras.h via.h qry.h dotFile.h drawSvg.h lista.h path.h
 
+hash.o: hash.c hash.h
+
 lista.o: lista.c lista.h
 
 fila.o: fila.c fila.h lista.h
 
-quadras.o: quadras.c quadras.h STreap.h
+quadras.o: quadras.c quadras.h STreap.h hash.h
 
 via.o: via.c via.h
 
-qry.o: qry.c qry.h quadras.h via.h STreap.h drawSvg.h
+qry.o: qry.c qry.h quadras.h via.h streap.h drawSvg.h digraph.h
 
 drawSvg.o: drawSvg.c drawSvg.h
 
-dotFile.o: dotFile.c dotFile.h STreap.h
+dotFile.o: dotFile.c dotFile.h streap.h
 
 path.o: path.c path.h digraph.h lista.h
 
-STreap.o: STreap.c STreap.h
+streap.o: streap.c streap.h
 
 digraph.o: digraph.c digraph.h lista.h
-
-geoFile.o: geoFile.c geoFile.h quadras.h
-
