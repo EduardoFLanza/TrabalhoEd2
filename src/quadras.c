@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include "quadras.h"
 
 #include <stdio.h>
@@ -20,19 +21,19 @@ typedef struct QuadraStr {
 /*
  * Estrutura principal do TAD Quadras.
  *
- * A STreap é responsável pela indexação espacial,
+ * Uma lista quadras para acesso das mesmas,
  * enquanto a Hash permite acesso direto por identificador.
  */
 typedef struct QuadrasStr {
     int nQuadras;
+    Lista lista;
     Hash tabelaHash;
-    STreap streap;
 } QuadrasStr;
 
 /*
  * Função auxiliar para liberação de uma quadra.
  */
-static void freeQuadra(Quadra q, void *aux)
+static void freeQuadra(Quadra q)
 {
     QuadraStr *quadra = (QuadraStr *) q;
 
@@ -57,8 +58,8 @@ Quadras processGeoFile(const char *path)
     if (!f) return NULL;
 
     QuadrasStr *qs = calloc(1, sizeof(QuadrasStr));
-    qs->tabelaHash = criaHash(50, true, 0.75f);
-    qs->streap = st_create(1e-7);
+    qs->lista = createLst(-1);
+    qs->tabelaHash = createHash(50, 0.75f);
 
     char op[32], id[64];
     char sw[32] = "", cfill[32] = "", cstrk[32] = "";
@@ -85,8 +86,8 @@ Quadras processGeoFile(const char *path)
             q->cstrk = strdup(cstrk);
             q->opacidade = 1.0;
 
-            inserirHash(qs->tabelaHash, q->id, q);
-            st_insert(qs->streap, x, y, q);
+            insertLst(qs->lista, q);
+            insertHash(qs->tabelaHash, q->id, q);
             qs->nQuadras++;
         }
     }
@@ -101,22 +102,20 @@ Quadras processGeoFile(const char *path)
 void percorrerQuadras(Quadras quadras, FvisitaQuadra f, void *aux)
 {
     if (!quadras || !f) return;
-    percursoLargura(((QuadrasStr *) quadras)->streap,
-                    (FvisitaNo) f, aux);
-}
 
-/*
- * Obtém quadras em uma região retangular.
- */
-void getQuadrasRegion(
-    Quadras quadras,
-    double x, double y,
-    double w, double h,
-    Lista resultado)
-{
-    if (!quadras || !resultado) return;
-    getNodeRegiaoSTrp(((QuadrasStr *) quadras)->streap,
-                      x, y, w, h, resultado);
+    Lista lista = ((QuadrasStr*)quadras)->lista;
+
+    Iterador it = createIterador(lista, false);
+
+    while (!isIteratorEmpty(lista, it)) {
+        QuadraStr* quadra = (QuadraStr*)getIteratorItem(lista, it);
+        
+        f(quadra, quadra->x, quadra->y, aux);
+
+        it = getIteratorNext(lista, it);
+    }
+
+    killIterator(lista, it);
 }
 
 /*
@@ -169,28 +168,37 @@ void removerQuadra(Quadras quadras, Quadra q)
     if (!quadras || !q) return;
 
     QuadrasStr *qs = (QuadrasStr *) quadras;
-    QuadraStr  *quadra = (QuadraStr *) q;
-
-    SNode n = st_search(qs->streap, quadra->x, quadra->y);
-    if (n) deleteNodeSTrp(qs->streap, n);
+    QuadraStr *quadra = (QuadraStr *) q;
 
     removeHashValue(qs->tabelaHash, quadra->id);
-    freeQuadra(q, NULL);
+
+    Iterador it = createIterador(qs->lista, false);
+    while (!isIteratorEmpty(qs->lista, it)) {
+        if (getIteratorItem(qs->lista, it) == quadra) {
+            removeLst(qs->lista, it); 
+            break;
+        }
+        it = getIteratorNext(qs->lista, it);
+    }
+    freeQuadra(quadra);
+    qs->nQuadras--;
 }
 
 /*
  * Libera todas as quadras.
  *
- * A STreap é responsável por liberar as quadras.
+ * A lista de quadra é responsavel pela liberacao.
  * A Hash apenas referencia os ponteiros, portanto
  * não deve liberar os valores.
  */
-void freeQuadras(Quadras quadras, void *aux)
+void freeQuadras(Quadras quadras)
 {
     if (!quadras) return;
 
     QuadrasStr *qs = (QuadrasStr *) quadras;
-    st_destroy(qs->streap, freeQuadra);
-    destroiHash(qs->tabelaHash, NULL, NULL);
+
+    killLst(qs->lista, freeQuadra);
+    destroyHash(qs->tabelaHash, NULL, NULL);
     free(qs);
 }
+
