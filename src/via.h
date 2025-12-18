@@ -2,7 +2,7 @@
 #define VIA_H
 
 #include <stdbool.h>
-#include "graph.h"
+#include "digraph.h"
 
 /**
  * Módulo: Via
@@ -60,9 +60,7 @@ void viaEnable(ArestaVia via);
 /* Atualiza a velocidade média da via */
 void viaSetSpeed(ArestaVia via, double speed);
 
-/* ============================================================
-   Acesso aos dados dos vértices
-   ============================================================ */
+/* Acesso aos dados dos vértices */
 
 /* Retorna a coordenada X */
 double viaGetX(VerticeVia v);
@@ -70,9 +68,7 @@ double viaGetX(VerticeVia v);
 /* Retorna a coordenada Y */
 double viaGetY(VerticeVia v);
 
-/* ============================================================
-   Acesso aos dados das vias
-   ============================================================ */
+/* Acesso aos dados das vias */
 
 /* Retorna o nome da via */
 const char* viaGetName(ArestaVia via);
@@ -86,18 +82,14 @@ double viaGetSpeed(ArestaVia via);
 /* Indica se a via está habilitada */
 bool viaIsEnabled(ArestaVia via);
 
-/* ============================================================
-   Liberação de memória
-   ============================================================ */
+/* Liberação de memória */
 
 /**
  * Libera a memória associada a uma via.
- *
- * Parâmetros:
- *   via   - aresta
- *   extra - parâmetro auxiliar (não utilizado)
- */
-void viaFreeEdge(ArestaVia via, void* extra);
+ * Parâmetros: via   - aresta */
+void viaFreeEdge(ArestaVia via);
 
 #endif /* VIA_H */
+
+
 
