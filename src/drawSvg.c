@@ -94,3 +94,4 @@ void fechaSvg(ArqSvg fsvg)
     fprintf((FILE *) fsvg, "\n</svg>");
     fclose((FILE *) fsvg);
 }
+
