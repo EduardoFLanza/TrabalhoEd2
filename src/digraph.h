@@ -1,5 +1,5 @@
-#ifndef _GRAPH__
-#define _GRAPH__
+#ifndef _DIGRAPH__
+#define _DIGRAPH__
 
 #include <stdbool.h>
 #include "lista.h"
@@ -28,7 +28,7 @@ typedef void* Edge;
 typedef void* Info;
 
 /* Funcoes auxiliares genericas */
-typedef void   (*freeFunc)(void*);
+typedef void   (*freeFuncDG)(Info);
 typedef double (*getNumberValue)(Info);
 
 /*
@@ -63,7 +63,7 @@ Node  getFromNode(Graph g, Edge e);
 Node  getToNode(Graph g, Edge e);
 Info  getEdgeInfo(Graph g, Edge e);
 void  setEdgeInfo(Graph g, Edge e, Info info);
-void  removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc);
+void  removeEdge(Graph g, Edge e, freeFuncDG freeEdgeFunc);
 bool  isAdjacent(Graph g, Node from, Node to);
 
 /* Consultas de adjacencia */
@@ -96,7 +96,7 @@ Lista  getDijkstraList(Caminho caminho);
 double getDijkstraDistance(Caminho caminho);
 
 /* Destruicao */
-void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc);
+void killDG(Graph g, freeFuncDG freeVerticeFunc, freeFuncDG freeEdgeFunc);
 void freeCaminho(Caminho caminho);
 
 #endif
