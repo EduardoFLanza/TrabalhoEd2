@@ -261,3 +261,5 @@ Lista filterClausure(Lista L, CheckClausure f, Clausura c);
 
 #endif
 
+
+
