@@ -38,20 +38,19 @@
  *     os comandos definidos no trabalho.
  *
  * Parâmetros:
- *     path          : caminho para o arquivo .qry
- *     g             : grafo viário previamente carregado (.via)
- *     quadras       : estrutura Quadras previamente carregada (.geo)
- *     quadrasStreap : STreap interna usada para consultas espaciais
- *     svg           : arquivo SVG de saída (já inicializado)
- *     txt           : arquivo TXT de relatório
+ *     path    : caminho para o arquivo .qry
+ *     g       : grafo viário previamente carregado (.via)
+ *     quadras : estrutura Quadras previamente carregada (.geo)
+ *     svg     : arquivo SVG de saída (já inicializado)
+ *     txt     : arquivo TXT de relatório
  *
  * Observações:
  *     - Todos os comandos do .qry são tratados aqui.
  *     - Inclui comandos como:
  *           * catac
  *           * bl / rebl
- *           * @o?
- *           * p?
+ *           * @o / @p
+ *           * p? (menor caminho por tempo ou comprimento)
  *     - A geração de animações SVG também é responsabilidade
  *       deste módulo.
  */
@@ -65,5 +64,4 @@ void processQryFile(
 );
 
 #endif /* _QRY_H_ */
-
 
