@@ -3,9 +3,10 @@
 
 #include <stdio.h>
 
-#include "graph.h"
+#include "streap.h"
+#include "digraph.h"
 #include "quadras.h"
-#include "svg.h"
+#include "drawSvg.h"
 
 /**
  * Módulo: QRY
@@ -57,7 +58,8 @@ void processQryFile(
     const char *path,
     Graph g,
     Quadras quadras,
-    Svg svg,
+    STreap quadrasStreap,
+    ArqSvg svg,
     FILE *txt
 );
 
