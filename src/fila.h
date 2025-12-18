@@ -1,7 +1,6 @@
 #ifndef FILA_H
 #define FILA_H
 
-#include "dataTypes.h"
 #include <stdbool.h>
 
 /*
@@ -18,6 +17,7 @@
 
 /* Tipo opaco exportado pelo módulo */
 typedef void *Fila;
+typedef void *ItemF;
 
 /*
  * Função: createFila
@@ -33,7 +33,7 @@ Fila createFila(int N);
  * Parâmetros: fila – instância da fila; item – elemento a ser inserido.
  * Retorno: Nenhum.
  */
-void insertFila(Fila fila, Item item);
+void insertFila(Fila fila, ItemF item);
 
 /*
  * Função: popFila
@@ -41,7 +41,7 @@ void insertFila(Fila fila, Item item);
  * Parâmetros: fila – instância da fila.
  * Retorno: Item removido ou NULL se a fila estiver vazia.
  */
-Item popFila(Fila fila);
+ItemF popFila(Fila fila);
 
 /*
  * Função: isFilaEmpty
