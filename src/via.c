@@ -1,15 +1,13 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
 #include "via.h"
-#include "graph.h"
+#include "digraph.h"
 
-/* ============================================================
-   Estruturas internas (TOTALMENTE encapsuladas)
-   ============================================================ */
-
+/* Estruturas internas */
 typedef struct {
     double x;
     double y;
@@ -24,10 +22,7 @@ typedef struct {
     bool enabled;
 } ViaEdge;
 
-/* ============================================================
-   Leitura do arquivo .via
-   ============================================================ */
-
+/* Leitura do arquivo .via */
 Graph viaReadFile(const char *path)
 {
     if (!path || !strstr(path, ".via")) {
@@ -94,10 +89,7 @@ Graph viaReadFile(const char *path)
     return g;
 }
 
-/* ============================================================
-   Operações sobre vias
-   ============================================================ */
-
+/* Operações sobre vias */
 void viaDisable(ArestaVia via)
 {
     ((ViaEdge *)via)->enabled = false;
@@ -113,10 +105,7 @@ void viaSetSpeed(ArestaVia via, double speed)
     ((ViaEdge *)via)->speed = speed;
 }
 
-/* ============================================================
-   Acesso aos vértices
-   ============================================================ */
-
+/* Acesso aos vértices  */
 double viaGetX(VerticeVia v)
 {
     return ((ViaVertex *)v)->x;
@@ -127,10 +116,7 @@ double viaGetY(VerticeVia v)
     return ((ViaVertex *)v)->y;
 }
 
-/* ============================================================
-   Acesso às vias
-   ============================================================ */
-
+/* Acesso às vias  */
 const char *viaGetName(ArestaVia via)
 {
     return ((ViaEdge *)via)->name;
@@ -151,16 +137,13 @@ bool viaIsEnabled(ArestaVia via)
     return ((ViaEdge *)via)->enabled;
 }
 
-/* ============================================================
-   Liberação de memória (callbacks para Graph)
-   ============================================================ */
-
-void viaFreeVertex(VerticeVia v, void *aux)
+/* Liberação de memória (callbacks para Graph) */
+void viaFreeVertex(VerticeVia v)
 {
     free(v);
 }
 
-void viaFreeEdge(ArestaVia via, void *aux)
+void viaFreeEdge(ArestaVia via)
 {
     ViaEdge *e = (ViaEdge *)via;
 
@@ -169,5 +152,3 @@ void viaFreeEdge(ArestaVia via, void *aux)
     free(e->left);
     free(e);
 }
-
-
