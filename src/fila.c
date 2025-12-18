@@ -6,6 +6,7 @@
    Implementação interna da fila
    ============================================================ */
 
+/* Estrutura interna da fila circular */
 typedef struct {
     int inicio;
     int fim;
@@ -17,14 +18,7 @@ typedef struct {
    Operações da fila
    ============================================================ */
 
-/*
- * Função: createFila
- * Descrição: cria uma fila com capacidade fixa N
- * Parâmetros:
- *   N – número máximo de elementos da fila
- * Retorno:
- *   Ponteiro para a fila criada ou NULL se N <= 0
- */
+/* Cria uma fila com tamanho máximo N */
 Fila createFila(int N)
 {
     if (N <= 0)
@@ -39,15 +33,7 @@ Fila createFila(int N)
     return p;
 }
 
-/*
- * Função: insertFila
- * Descrição: insere um elemento no final da fila
- * Parâmetros:
- *   fila – fila onde o elemento será inserido
- *   ItemF – elemento a ser inserido
- * Retorno:
- *   Nenhum (se a fila estiver cheia, a inserção é ignorada)
- */
+/* Insere um elemento no final da fila */
 void insertFila(Fila fila, ItemF ItemF)
 {
     if (isFilaFull(fila))
@@ -60,14 +46,7 @@ void insertFila(Fila fila, ItemF ItemF)
     p->fim = indice;
 }
 
-/*
- * Função: popFila
- * Descrição: remove e retorna o primeiro elemento da fila
- * Parâmetros:
- *   fila – fila de onde o elemento será removido
- * Retorno:
- *   Elemento removido ou NULL se a fila estiver vazia
- */
+/* Remove e retorna o primeiro elemento da fila */
 ItemF popFila(Fila fila)
 {
     if (isFilaEmpty(fila))
@@ -86,42 +65,21 @@ ItemF popFila(Fila fila)
     return ItemF;
 }
 
-/*
- * Função: isFilaEmpty
- * Descrição: verifica se a fila está vazia
- * Parâmetros:
- *   fila – fila a ser verificada
- * Retorno:
- *   true se a fila estiver vazia, false caso contrário
- */
+/* Verifica se a fila está vazia */
 bool isFilaEmpty(Fila fila)
 {
     FilaImpl *p = (FilaImpl *)fila;
     return p->fim == -1;
 }
 
-/*
- * Função: isFilaFull
- * Descrição: verifica se a fila está cheia
- * Parâmetros:
- *   fila – fila a ser verificada
- * Retorno:
- *   true se a fila estiver cheia, false caso contrário
- */
+/* Verifica se a fila está cheia */
 bool isFilaFull(Fila fila)
 {
     FilaImpl *p = (FilaImpl *)fila;
     return countFila(fila) == p->tamanho;
 }
 
-/*
- * Função: countFila
- * Descrição: retorna a quantidade atual de elementos na fila
- * Parâmetros:
- *   fila – fila a ser analisada
- * Retorno:
- *   Número de elementos presentes na fila
- */
+/* Retorna a quantidade de elementos na fila */
 int countFila(Fila fila)
 {
     FilaImpl *p = (FilaImpl *)fila;
@@ -135,55 +93,28 @@ int countFila(Fila fila)
     return p->tamanho - p->inicio + p->fim + 1;
 }
 
-/*
- * Função: getFilaInicio
- * Descrição: retorna o índice do início da fila
- * Parâmetros:
- *   fila – fila consultada
- * Retorno:
- *   Índice do início da fila
- */
+/* Retorna o índice do início da fila */
 int getFilaInicio(Fila fila)
 {
     return ((FilaImpl *)fila)->inicio;
 }
 
-/*
- * Função: getFilaFim
- * Descrição: retorna o índice do fim da fila
- * Parâmetros:
- *   fila – fila consultada
- * Retorno:
- *   Índice do fim da fila
- */
+/* Retorna o índice do fim da fila */
 int getFilaFim(Fila fila)
 {
     return ((FilaImpl *)fila)->fim;
 }
 
-/*
- * Função: getFilaLength
- * Descrição: retorna a capacidade máxima da fila
- * Parâmetros:
- *   fila – fila consultada
- * Retorno:
- *   Capacidade total da fila
- */
+/* Retorna a capacidade máxima da fila */
 int getFilaLength(Fila fila)
 {
     return ((FilaImpl *)fila)->tamanho;
 }
 
-/*
- * Função: removeFila
- * Descrição: libera toda a memória associada à fila
- * Parâmetros:
- *   fila – fila a ser destruída
- */
+/* Libera a memória da fila */
 void removeFila(Fila fila)
 {
     FilaImpl *p = (FilaImpl *)fila;
     free(p->stack);
     free(p);
 }
-
