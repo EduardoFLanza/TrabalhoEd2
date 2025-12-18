@@ -8,18 +8,17 @@
 #include "path.h"
 #include "lista.h"
 
-/* =========================================================
-   Estruturas auxiliares
-   ========================================================= */
-
 typedef struct {
     Node origem;
     Node destino;
 } RotaAtual;
 
-/* =========================================================
-   Função LOCAL: encontra vértice mais próximo (NÃO EXISTIA)
-   ========================================================= */
+typedef struct {
+    Graph grafo;
+    FILE* file;
+    double* tempoTotal;
+    double placement;
+} ResourcesAnimation;
 
 static Node findNearestNode(Graph g, double x, double y) {
     int total = getTotalNodes(g);
@@ -42,14 +41,10 @@ static Node findNearestNode(Graph g, double x, double y) {
     return best;
 }
 
-/* =========================================================
-   Funções auxiliares SVG
-   ========================================================= */
-
 void drawRecSvgQry(SInfo info, double x, double y,
-                   double mbbX1, double mbbY1,
-                   double mbbX2, double mbbY2,
-                   void *aux)
+                    double mbbX1, double mbbY1,
+                    double mbbX2, double mbbY2,
+                    void *aux)
 {
     ArqSvg svgArq = (ArqSvg)aux;
     escreveRetanguloSvg(
@@ -65,26 +60,18 @@ void drawRecSvgQry(SInfo info, double x, double y,
     );
 }
 
-/* =========================================================
-   Animação de caminho
-   ========================================================= */
-
-typedef struct {
-    Graph grafo;
-    FILE* file;
-    double* tempoTotal;
-    double placement;
-} ResourcesAnimation;
-
 void animateEdgeSVG(void* item, void* extra) {
     Edge e = (Edge)item;
     ResourcesAnimation* res = (ResourcesAnimation*)extra;
+    if (!e || !res) return;
 
     Node u = getFromNode(res->grafo, e);
     Node v = getToNode(res->grafo, e);
 
     VerticeVia vu = getNodeInfo(res->grafo, u);
     VerticeVia vv = getNodeInfo(res->grafo, v);
+
+    if (!vu || !vv) return;
 
     double x1 = viaGetX(vu) - res->placement;
     double y1 = viaGetY(vu) - res->placement;
@@ -103,20 +90,24 @@ void animateEdgeSVG(void* item, void* extra) {
 void drawAnimatedPathSvg(ArqSvg svg, Graph g, Caminho c, char* color) {
     if (!svg || !g || !c) return;
 
+    Lista edges = getDijkstraList(c);
+    if (!edges || isEmptyLst(edges)) return;
+
     static int pathID = 0;
     double tempoTotal = 0;
 
-    Lista edges = getDijkstraList(c);
-
     fprintf(svg, "\n<path id=\"path%d\" d=\"", pathID);
 
-    Edge last = getLst(edges, getLastLst(edges));
-    Node origem = getFromNode(g, last);
+    Posic lastPos = getLastLst(edges);
+    Edge lastEdge = getLst(edges, lastPos);
+    Node origem = getFromNode(g, lastEdge);
     VerticeVia vo = getNodeInfo(g, origem);
 
-    fprintf(svg, "M %.2f,%.2f",
-            viaGetX(vo) - pathID * 2.0,
-            viaGetY(vo) - pathID * 2.0);
+    if (vo) {
+        fprintf(svg, "M %.2f,%.2f",
+                viaGetX(vo) - pathID * 2.0,
+                viaGetY(vo) - pathID * 2.0);
+    }
 
     ResourcesAnimation res = { g, svg, &tempoTotal, pathID * 2.0 };
 
@@ -137,12 +128,7 @@ void drawAnimatedPathSvg(ArqSvg svg, Graph g, Caminho c, char* color) {
             color, tempoTotal, pathID);
 
     pathID++;
-    killLst(edges, NULL);
 }
-
-/* =========================================================
-   Custos Dijkstra
-   ========================================================= */
 
 static double custoPorComprimento(Info info) {
     if (!info) return 1e12;
@@ -156,13 +142,107 @@ static double custoPorTempo(Info info) {
     return viaGetLength(info) / v;
 }
 
-/* =========================================================
-   ORIGEM / DESTINO (quadra + endereço)
-   ========================================================= */
+static void cmdCatac(FILE* txt, ArqSvg svg,
+                      Quadras quadras,
+                      STreap quadrasStreap,
+                      Graph g,
+                      double x, double y, double w, double h) {
+    
+    fprintf(txt, "CATAC x=%lf y=%lf w=%lf h=%lf\n", x, y, w, h);
+
+    Lista removidas = createLst(-1);
+    getNodeRegiaoSTrp(quadrasStreap, x, y, w, h, removidas);
+    
+    while (!isEmptyLst(removidas)) {
+        SNode noTreap = popLst(removidas);
+        Quadra q = st_getInfo(noTreap);
+        
+        if (q) {
+            fprintf(txt, "Quadra removida: %s\n", getQuadraID(q));
+            escreveRetanguloSvg(svg, getQuadraX(q), getQuadraY(q), 
+                                getQuadraWidth(q), getQuadraHeight(q), 
+                                "#AB37C8", "#AA0044", "2px", 0.5f);
+
+            removeSTrp(quadrasStreap, getQuadraX(q), getQuadraY(q));
+            removerQuadra(quadras, q);
+        }
+    }
+    killLst(removidas, NULL);
+    
+    Lista arestas = createLst(-1);
+    getEdges(g, arestas);
+    while (!isEmptyLst(arestas)) {
+        Edge e = popLst(arestas);
+        ArestaVia av = getEdgeInfo(g, e);
+        if (!av || !viaIsEnabled(av)) continue;
+
+        Node u = getFromNode(g, e);
+        Node v = getToNode(g, e);
+        VerticeVia vu = getNodeInfo(g, u);
+        VerticeVia vv = getNodeInfo(g, v);
+
+        if (vu && vv) {
+            double mx = (viaGetX(vu) + viaGetX(vv)) / 2;
+            double my = (viaGetY(vu) + viaGetY(vv)) / 2;
+
+            if (mx >= x && mx <= x + w && my >= y && my <= y + h) {
+                viaDisable(av);
+                fprintf(txt, "Via desabilitada: %s\n", viaGetName(av));
+            }
+        }
+    }
+    killLst(arestas, NULL);
+}
+
+static void cmdBl(FILE* txt, Graph g,
+                  double x, double y, double w, double h) {
+
+    fprintf(txt, "BL x=%lf y=%lf w=%lf h=%lf\n", x, y, w, h);
+
+    Lista arestas = createLst(-1);
+    getEdges(g, arestas);
+
+    while (!isEmptyLst(arestas)) {
+        Edge e = popLst(arestas);
+        ArestaVia av = getEdgeInfo(g, e);
+        if (!av) continue;
+
+        Node u = getFromNode(g, e);
+        Node v = getToNode(g, e);
+        VerticeVia vu = getNodeInfo(g, u);
+        VerticeVia vv = getNodeInfo(g, v);
+
+        if (vu && vv) {
+            double mx = (viaGetX(vu) + viaGetX(vv)) / 2;
+            double my = (viaGetY(vu) + viaGetY(vv)) / 2;
+
+            if (mx >= x && mx <= x + w && my >= y && my <= y + h) {
+                viaDisable(av);
+                fprintf(txt, "Via bloqueada: %s\n", viaGetName(av));
+            }
+        }
+    }
+    killLst(arestas, NULL);
+}
+
+static void cmdRebl(FILE* txt, Graph g, const char* nome) {
+    fprintf(txt, "REBL %s\n", nome);
+    Lista arestas = createLst(-1);
+    getEdges(g, arestas);
+
+    while (!isEmptyLst(arestas)) {
+        Edge e = popLst(arestas);
+        ArestaVia av = getEdgeInfo(g, e);
+        if (av && strcmp(viaGetName(av), nome) == 0) {
+            viaEnable(av);
+            fprintf(txt, "Via reabilitada: %s\n", nome);
+        }
+    }
+    killLst(arestas, NULL);
+}
 
 static void calculaEndereco(Quadra q, const char* face, double num,
                             double* x, double* y) {
-
     double qx = getQuadraX(q);
     double qy = getQuadraY(q);
     double w  = getQuadraWidth(q);
@@ -177,44 +257,33 @@ static void calculaEndereco(Quadra q, const char* face, double num,
 static void cmdOrigem(FILE* txt, Graph g, Quadras quadras,
                       RotaAtual* rota,
                       const char* id, const char* face, const char* num) {
-
-    Quadra q = getQuadra(quadras, id);
+    Quadra q = getQuadraByID(quadras, id);
     if (!q) {
         rota->origem = -1;
         return;
     }
-
     double x, y;
     calculaEndereco(q, face, atof(num), &x, &y);
     rota->origem = findNearestNode(g, x, y);
-
     fprintf(txt, "Origem: %s %s %s\n", id, face, num);
 }
 
 static void cmdDestino(FILE* txt, Graph g, Quadras quadras,
                        RotaAtual* rota,
                        const char* id, const char* face, const char* num) {
-
-    Quadra q = getQuadra(quadras, id);
+    Quadra q = getQuadraByID(quadras, id);
     if (!q) {
         rota->destino = -1;
         return;
     }
-
     double x, y;
     calculaEndereco(q, face, atof(num), &x, &y);
     rota->destino = findNearestNode(g, x, y);
-
     fprintf(txt, "Destino: %s %s %s\n", id, face, num);
 }
 
-/* =========================================================
-   p?
-   ========================================================= */
-
 static void cmdPath(FILE* txt, ArqSvg svg, Graph g,
-                    RotaAtual* rota, bool tempo) {
-
+                    RotaAtual* rota, bool tempo, char* cor) {
     if (rota->origem < 0 || rota->destino < 0) return;
 
     Caminho c = getShortestPath(
@@ -228,13 +297,9 @@ static void cmdPath(FILE* txt, ArqSvg svg, Graph g,
     }
 
     fprintf(txt, "Distancia: %.2lf\n", getDijkstraDistance(c));
-    drawAnimatedPathSvg(svg, g, c, tempo ? "blue" : "green");
+    drawAnimatedPathSvg(svg, g, c, cor);
     freeCaminho(c);
 }
-
-/* =========================================================
-   PROCESSAMENTO QRY
-   ========================================================= */
 
 void processQryFile(const char* path,
                     Graph g,
@@ -250,7 +315,6 @@ void processQryFile(const char* path,
     char cmd[32];
 
     while (fscanf(f, "%s", cmd) != EOF) {
-
         if (!strcmp(cmd, "catac")) {
             double x, y, w, h;
             fscanf(f, "%lf %lf %lf %lf", &x, &y, &w, &h);
@@ -272,16 +336,14 @@ void processQryFile(const char* path,
             cmdOrigem(txt, g, quadras, &rota, id, face, num);
         }
         else if (!strcmp(cmd, "p?")) {
-            char id[64], face[8], num[32], c1[32];
-            fscanf(f, "%s %s %s %s", id, face, num, c1);
+            char id[64], face[8], num[32], c1[32], c2[32];
+            fscanf(f, "%s %s %s %s %s", id, face, num, c1, c2);
             cmdDestino(txt, g, quadras, &rota, id, face, num);
-            cmdPath(txt, svg, g, &rota, true);
-            cmdPath(txt, svg, g, &rota, false);
+            cmdPath(txt, svg, g, &rota, true, c1);
+            cmdPath(txt, svg, g, &rota, false, c2);
         }
     }
 
     percursoLargura(quadrasStreap, drawRecSvgQry, svg);
     fclose(f);
 }
-
-
