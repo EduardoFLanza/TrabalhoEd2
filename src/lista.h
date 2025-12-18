@@ -1,7 +1,6 @@
 #ifndef _LISTA_H
 #define _LISTA_H
 
-#include "dataTypes.h"
 #include <stdbool.h>
 
 /*
@@ -30,10 +29,13 @@ typedef void *Lista;
 typedef void *Posic;
 typedef void *Iterador;
 typedef void *Clausura;
+typedef void *Item;
 
 /* Constantes exportadas */
 #define NIL NULL
 #define CAPAC_ILIMITADA -1
+
+typedef void (*freeFuncLst) (Item);
 
 /*
  * Função: createLst
@@ -166,10 +168,10 @@ Posic getPreviousLst(Lista L, Posic p);
 /*
  * Função: killLst
  * Descrição: Libera toda a memória associada à lista.
- * Parâmetros: L – lista.
+ * Parâmetros: L – lista; f - função para liberação do item da lista.
  * Retorno: Nenhum.
  */
-void killLst(Lista L);
+void killLst(Lista L, freeFuncLst f);
 
 /*
  * Função: createIterador
@@ -258,3 +260,4 @@ void fold(Lista L, ApplyClosure f, Clausura c);
 Lista filterClausure(Lista L, CheckClausure f, Clausura c);
 
 #endif
+
