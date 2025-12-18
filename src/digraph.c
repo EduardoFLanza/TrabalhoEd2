@@ -1,4 +1,5 @@
-#include "graph.h"
+#define _XOPEN_SOURCE 700
+#include "digraph.h"
 #include "lista.h"
 
 #include <stdlib.h>
@@ -73,7 +74,7 @@ Graph createGraph(int nVert) {
     return g;
 }
 
-void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc) {
+void killDG(Graph g, freeFuncDG freeVerticeFunc, freeFuncDG freeEdgeFunc) {
     if(!g) return;
     GraphImpl* gr = (GraphImpl*) g;
 
@@ -82,21 +83,21 @@ void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc) {
         if(freeVerticeFunc)
             freeVerticeFunc(n->info);
 
-        freeLst(n->edgesOut, NULL);
-        freeLst(n->edgesIn, NULL);
+        killLst(n->edgesOut, NULL);
+        killLst(n->edgesIn, NULL);
 
         free(n->name);
         free(n);
     }
 
-    freeLst(gr->allEdges, freeEdgeFunc);
+    killLst(gr->allEdges, freeEdgeFunc);
     free(gr->nodes);
     free(gr);
 }
 
 void freeCaminho(Caminho caminho){
     CaminhoImpl* c = (CaminhoImpl*) caminho;
-    freeLst(c->pathEdges, NULL);
+    killLst(c->pathEdges, NULL);
     free(c);
 }
 
@@ -198,7 +199,7 @@ void setEdgeInfo(Graph g, Edge e, Info info){
     getEdgeInternal(e)->info = info;
 }
 
-void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc){
+void removeEdge(Graph g, Edge e, freeFuncDG freeEdgeFunc){
     GraphImpl* gr = (GraphImpl*) g;
     EdgeImpl* edge = getEdgeInternal(e);
 
@@ -210,21 +211,21 @@ void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc){
 
     for(Posic p = getFirstLst(from->edgesOut); p != NIL; p = getNextLst(from->edgesOut,p)){
         if((Node)(size_t)getLst(from->edgesOut,p) == edge->to){
-            removeLst(from->edgesOut,p,NULL);
+            removeLst(from->edgesOut,p);
             break;
         }
     }
 
     for(Posic p = getFirstLst(to->edgesIn); p != NIL; p = getNextLst(to->edgesIn,p)){
         if((Node)(size_t)getLst(to->edgesIn,p) == edge->from){
-            removeLst(to->edgesIn,p,NULL);
+            removeLst(to->edgesIn,p);
             break;
         }
     }
 
     for(Posic p = getFirstLst(gr->allEdges); p != NIL; p = getNextLst(gr->allEdges,p)){
         if(getLst(gr->allEdges,p) == edge){
-            removeLst(gr->allEdges,p,NULL);
+            removeLst(gr->allEdges,p);
             break;
         }
     }
@@ -289,7 +290,7 @@ void getAllVerticesInfo(Graph g, Lista allInfo){
 }
 
 int getTotalEdges(Graph g){
-    return sizeLst(((GraphImpl*)g)->allEdges);
+    return lengthLst(((GraphImpl*)g)->allEdges);
 }
 
 /* ============================================================
@@ -362,10 +363,10 @@ bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra){
     insertLst(queue, (void*)(size_t)node);
     visited[node] = true;
 
-    while(sizeLst(queue) > 0){
+    while(lengthLst(queue) > 0){
         Posic p = getFirstLst(queue);
         Node u = (Node)(size_t)getLst(queue,p);
-        removeLst(queue,p,NULL);
+        removeLst(queue,p);
 
         NodeImpl* nodeU = getNodeInternal(g,u);
         for(Posic q = getFirstLst(nodeU->edgesOut); q != NIL; q = getNextLst(nodeU->edgesOut,q)){
@@ -377,14 +378,14 @@ bool bfs(Graph g, Node node, procEdge discoverEdge, void *extra){
                 insertLst(queue, (void*)(size_t)v);
 
                 if(discoverEdge && !discoverEdge(g,e,0,0,extra)){
-                    freeLst(queue,NULL);
+                    killLst(queue,NULL);
                     return false;
                 }
             }
         }
     }
 
-    freeLst(queue,NULL);
+    killLst(queue,NULL);
     return true;
 }
 
@@ -396,9 +397,9 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
     GraphImpl* gr = (GraphImpl*) g;
     int n = gr->numNodes;
 
-    double dist[n];
-    int prev[n];
-    bool visited[n];
+    double* dist   = malloc(sizeof(double) * n);
+    int*    prev   = malloc(sizeof(int) * n);
+    bool*   visited= malloc(sizeof(bool) * n);
 
     for(int i = 0; i < n; i++){
         dist[i] = DBL_MAX;
@@ -406,7 +407,7 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
         visited[i] = false;
     }
 
-    dist[from] = 0;
+    dist[from] = 0.0;
 
     for(int i = 0; i < n; i++){
         double minDist = DBL_MAX;
@@ -419,16 +420,20 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
             }
         }
 
-        if(u == -1) break;
+        if(u == -1)
+            break;
 
         visited[u] = true;
         NodeImpl* nodeU = gr->nodes[u];
 
         for(Posic p = getFirstLst(nodeU->edgesOut); p != NIL; p = getNextLst(nodeU->edgesOut,p)){
             Node v = (Node)(size_t)getLst(nodeU->edgesOut,p);
-            EdgeImpl* e = getEdge(g, u, v);
 
-            double w = getDistanceFunc ? getDistanceFunc(e->info) : e->weight;
+            Edge e = getEdge(g, u, v);
+            if(!e) continue;
+
+            EdgeImpl* edge = getEdgeInternal(e);
+            double w = getDistanceFunc ? getDistanceFunc(edge->info) : edge->weight;
 
             if(dist[u] + w < dist[v]){
                 dist[v] = dist[u] + w;
@@ -448,20 +453,9 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceF
         cur = prev[cur];
     }
 
+    free(dist);
+    free(prev);
+    free(visited);
+
     return caminho;
-}
-
-Lista getDijkstraList(Caminho caminho){
-    CaminhoImpl* c = (CaminhoImpl*) caminho;
-    Lista copy = createLst(-1);
-
-    for(Posic p = getFirstLst(c->pathEdges); p != NIL; p = getNextLst(c->pathEdges,p)){
-        insertLst(copy, getLst(c->pathEdges,p));
-    }
-
-    return copy;
-}
-
-double getDijkstraDistance(Caminho caminho){
-    return ((CaminhoImpl*)caminho)->distance;
 }
