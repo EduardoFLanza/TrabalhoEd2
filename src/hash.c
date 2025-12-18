@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include "hash.h"
 
 #include <stdio.h>
@@ -33,25 +34,6 @@ typedef struct HashImpl {
    ============================================================ */
 
 /*
- * Verifica se um número é primo
- */
-static bool isPrime(int n) {
-    if (n < 2) return false;
-    for (int i = 2; i <= sqrt(n); i++)
-        if (n % i == 0) return false;
-    return true;
-}
-
-/*
- * Retorna o próximo número primo maior ou igual a n
- */
-static int nextPrime(int n) {
-    if (n % 2 == 0) n++;
-    while (!isPrime(n)) n += 2;
-    return n;
-}
-
-/*
  * Função hash baseada em djb2
  */
 static unsigned long hashFunction(const char* str) {
@@ -75,7 +57,7 @@ static int hashIndex(HashImpl* h, const char* key) {
  * Reorganiza a tabela quando o fator de carga é excedido
  */
 static void rehash(HashImpl* h) {
-    int newSize = nextPrime(h->size * 2);
+    int newSize = h->size * 2;
     HashCell** newTable = malloc(sizeof(HashCell*) * newSize);
 
     for (int i = 0; i < newSize; i++)
@@ -103,13 +85,13 @@ static void rehash(HashImpl* h) {
    Criação e destruição
    ============================================================ */
 
-Hash createHash(int initialSize, bool usePrime, double maxLoad) {
+Hash createHash(int initialSize, double maxLoad) {
     if (initialSize < 1) return NULL;
 
     HashImpl* h = malloc(sizeof(HashImpl));
     if (!h) return NULL;
 
-    h->size = usePrime ? nextPrime(initialSize) : initialSize;
+    h->size = initialSize;
     h->used = 0;
     h->maxLoad = maxLoad;
 
@@ -125,7 +107,7 @@ Hash createHash(int initialSize, bool usePrime, double maxLoad) {
     return h;
 }
 
-void destroyHash(Hash hash, freeFunc freeValue, void* extra) {
+void destroyHash(Hash hash, freeFuncHash freeValue, void* extra) {
     if (!hash) return;
 
     HashImpl* h = (HashImpl*) hash;
@@ -227,28 +209,4 @@ HashItem removeHashValue(Hash hash, const char* key) {
     return NULL;
 }
 
-/* ============================================================
-   Depuração
-   ============================================================ */
-
-void printHash(Hash hash, printFunc printValue) {
-    if (!hash) return;
-
-    HashImpl* h = (HashImpl*) hash;
-
-    for (int i = 0; i < h->size; i++) {
-        HashCell* cell = h->table[i];
-        if (!cell) continue;
-
-        printf("[%d]: ", i);
-        while (cell) {
-            printf("(%s)", cell->key);
-            if (printValue)
-                printf(" -> %s", printValue(cell->value, NULL));
-            printf("  ");
-            cell = cell->next;
-        }
-        printf("\n");
-    }
-}
 
