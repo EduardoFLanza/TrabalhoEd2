@@ -6,7 +6,7 @@
    Implementação interna da fila
    ============================================================ */
 
-/* Estrutura interna da fila circular */
+/* Estrutura interna da fila */
 typedef struct {
     int inicio;
     int fim;
