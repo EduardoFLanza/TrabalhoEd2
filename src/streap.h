@@ -1,7 +1,7 @@
 /**
  * Módulo: STreap
  * Finalidade:
- *     Implementa uma Treap espacial (STreap), que associa a cada ponto-âncora (x,y)
+ *     Implementa uma STreap, que associa a cada ponto-âncora (x,y)
  *     uma informação arbitrária. A chave de busca é a coordenada da âncora.
  *
  *     A comparação entre duas chaves segue a regra:
@@ -17,7 +17,7 @@
  */
 
 /**
- *   Árvore espacial tipo Treap (STreap) para indexação de elementos por
+ *   Streap para indexação de elementos por
  *   coordenada (x,y). Fornece inserção, remoção, busca por região, percurso
  *   e obtenção da menor bounding box que engloba todos os elementos.
  *
@@ -35,7 +35,10 @@ typedef void* STreap;
 typedef void* SInfo;
 typedef void* SNode;
 
-/* Assinatura para função de visita a um nó durante percursos */
+/* * Assinatura para função de visita a um nó durante percursos.
+ * Recebe a informação, a coordenada do nó (x,y) e os limites da 
+ * subárvore enraizada neste nó (mbbX1, mbbY1, mbbX2, mbbY2).
+ */
 typedef void (*FvisitaNo)(SInfo info, double x, double y,
                           double mbbX1, double mbbY1,
                           double mbbX2, double mbbY2,
@@ -48,7 +51,7 @@ STreap st_create(double epsilon);
 SNode st_insert(STreap t, double x, double y, SInfo info);
 
 /* Remove o nó com ancora (x,y) e retorna a SInfo associada; NULL se não encontrado */
-SInfo removeSTrp(STreap t, double xa, double ya);
+SInfo removeSTrp(STreap t, double x, double y);
 
 /* Remove um nó por ponteiro SNode; retorna a SInfo associada */
 SInfo deleteNodeSTrp(STreap t, SNode n);
@@ -62,6 +65,12 @@ SInfo st_getInfo(SNode n);
 /* Obtém a chave (x,y) do nó */
 void st_getKey(SNode n, double *x, double *y);
 
+/* Obtém o Bounding Box (MBB) da subárvore enraizada no nó 'n' */
+void st_getNodeBB(SNode n, double *x1, double *y1, double *x2, double *y2);
+
+/* Obtém a raiz da STreap */
+SNode st_getRoot(STreap s);
+
 /* Insere em `resultado` os nós cuja ancora esteja dentro do retângulo (x,y,w,h) */
 void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
 
@@ -73,19 +82,20 @@ void percursoLargura(STreap t, FvisitaNo fVisita, void *aux);
 void percursoSimetrico(STreap t, FvisitaNo fVisita, void *aux);
 void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
 
-/* Busca por região (range search) aplicando visit a cada nó encontrado */
+/* Busca por região (range search) aplicando visit a cada nó encontrado. 
+   Otimizado pelo uso dos MBBs internos para poda de ramos. */
 void st_rangeSearch(STreap t, double xmin, double ymin, double xmax, double ymax, void (*visit)(SNode));
 
 /* Realiza percurso inorder por X e aplica visit */
 void st_inorderX(STreap t, void (*visit)(SNode));
 
-/* Retorna 1 se existirem elementos e preenche xmin,ymin,xmax,ymax; caso contrário 0 */
+/* Retorna 1 se existirem elementos e preenche xmin,ymin,xmax,ymax com os limites globais; caso contrário 0 */
 int st_getMBB(STreap t, double *xmin, double *ymin, double *xmax, double *ymax);
 
 /* Destrói a STreap; freeInfo é callback opcional para liberar cada SInfo */
 void st_destroy(STreap t, void (*freeInfo)(SInfo));
 
-/* Debug: imprime em formato dot (opcional) */
+/* Debug: imprime em formato dot para visualização com Graphviz */
 void printSTrp(STreap t, const char *nomeArq);
 
 #endif /* STREAP_H */
