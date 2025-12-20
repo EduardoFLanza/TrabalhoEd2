@@ -151,13 +151,15 @@ int main(int argc, char *argv[])
         char qryName[256];
         getFileNameWithoutExt(qryArg, qryName, sizeof(qryName));
 
-        // svgFinal = [outputPath]/[geoName]-[qryName].svg, ex: ./c1-q.svg, outputPath = '.', geoName = 'c1', qryName = 'q'
+        substituteLastOccourence(qryName, '/', '-');
+
+        // svgFinal = [outputPath]/[qryName].svg, ex: ./c1-q.svg, outputPath = '.', qryName = 'c1-q'
         char svgFinal[512];
-        sprintf(svgFinal, "%s/%s-%s.svg", outputPath, geoName, qryName);
+        sprintf(svgFinal, "%s/%s.svg", outputPath, qryName);
 
         // Mesma coisa do svgFinal, mas .txt
         char txtFinal[512];
-        sprintf(txtFinal, "%s/%s-%s.txt", outputPath, geoName, qryName);
+        sprintf(txtFinal, "%s/%s.txt", outputPath, qryName);
 
         FILE *txt = fopen(txtFinal, "w");
 
@@ -173,7 +175,7 @@ int main(int argc, char *argv[])
 
         // Faz um .dot com as mudanças do qry nas quadras
         char dotFinal[512];
-        sprintf(dotFinal, "%s/%s-%s.dot", outputPath, geoName, qryName);
+        sprintf(dotFinal, "%s/%s.dot", outputPath, qryName);
         printSTrp(quadrasStreap, dotFinal);
     }
 
