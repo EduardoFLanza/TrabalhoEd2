@@ -143,9 +143,7 @@ int main(int argc, char *argv[])
     if (qryArg) {
         // qryFile = [geoPath - '.']/[qryArg].qry, ex: ./c1/q.qry, geoPath = './c1.geo' - '.' = './c1', qryArg = 'q'
         char qryFile[512];
-        char entryGeoName[512];
-        getFileNameWithoutExt(geoFile, entryGeoName, sizeof(geoFile));
-        sprintf(qryFile, "%s/%s", entryGeoName, qryArg);
+        sprintf(qryFile, "%s/%s", entryPath, qryArg);
 
         printf("\n[ Qry: %s ]\n", qryFile);
 
