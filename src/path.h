@@ -120,6 +120,16 @@ void getExt(char *fullPath, char *ext, int lenExt);
  */
 void getFileNameWithoutExt(char *fullPath, char *fileName, int lenFileName);
 
+/*
+ * Função: substituirUltimaOcorrencia
+ * Descrição: Localiza a última instância de um caractere específico em uma string 
+ * e a substitui por outro caractere.
+ * Parâmetros:  str – a string a ser modificada (deve ser mutável).
+ *              antigo – o caractere que se deseja procurar.
+ *              novo – o caractere que substituirá a última ocorrência encontrada.
+ * Retorno: Inteiro (1 se a substituição foi realizada, 0 caso o caractere 
+ * não tenha sido encontrado).
+ */
+int substituteLastOccourence(char *path, char prev, char new);
+
 #endif
-
-
